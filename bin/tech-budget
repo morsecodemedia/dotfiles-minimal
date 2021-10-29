@@ -1,2 +1,0 @@
-#!/bin/sh
-awk -F ', ' '{sum += $3} END {printf "$%.2f/year\n", sum; printf "$%.2f/month\n", sum/12}' "${NOTE_DIR}/w/tech-budget.md"
