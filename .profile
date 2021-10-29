@@ -57,23 +57,12 @@ export LYNX_CFG="$HOME/.config/lynx/config"
 export CURL_HOME="$HOME/.config/curl"
 export WWW_HOME="gopher://gopher.black"
 
-# sync
-export SYNCTHING_PATH="$HOME/.syncthing"
-export SSH_ENV="$HOME/.ssh/environment"
-
-# lastpass
-export LPASS_HOME="$HOME/.lpass"
-export LPASS_DISABLE_PINENTRY=1
-export SSH_KEY_LOCATIONS="${HOME}/.ssh/ ${HOME}/.spideroak/Documents/Keys/personal/ssh/ ${HOME}/.spideroak/Documents/Keys/work/ssh/"
 
 # personal app storage paths
-export TODO="$SYNCTHING_PATH/todo/personal.txt"
-export NOTE_DIR="$SYNCTHING_PATH/notes"
-export CONTACTS_DIR="$SYNCTHING_PATH/contacts"
-export TRACK_DIR="$SYNCTHING_PATH/track"
+export NOTE_DIR="$DROPBOX_PATH/notes"
 
 # system
-export TZ="Atlantic/Reykjavik"
+export TZ="America/New_York"
 export LANG="en_US.UTF-8"
 export LC_ALL="en_US.UTF-8"
 
@@ -86,12 +75,9 @@ export XDG_DATA_HOME="$HOME/.local/share"
 export MPLAYER_HOME=$XDG_CONFIG_HOME/mplayer
 export LESSHISTFILE="${XDG_CONFIG_HOME}/less/history"
 export LESSKEY="${XDG_CONFIG_HOME}/less/keys"
-export LPASS_HOME=$XDG_CONFIG_HOME/lpass
 export NPM_CONFIG_USERCONFIG=$XDG_CONFIG_HOME/npm/config
 export NPM_CONFIG_CACHE=$XDG_CACHE_HOME/npm
 export NPM_CONFIG_TMP=$XDG_RUNTIME_DIR/npm
-export CALCHISTFILE=$XDG_DATA_HOME/calc_history
-export DOTREMINDERS=$XDG_CONFIG_HOME/remind/reminders
 
 # vim
 export EDITOR="vim"
@@ -123,6 +109,7 @@ else
   alias ls='ls --color'
 fi
 
+alias ll='ls -lha'
 alias lsd='ls -Gl | grep "^d"'
 alias cd..="cd .."
 alias ..="cd .."
@@ -133,7 +120,6 @@ alias ......="cd ../../../../.."
 alias grep='grep --color=auto'
 alias mkdir='mkdir -p'
 alias lynx='lynx -display_charset=utf8 --lss=/dev/null'
-alias newsboat='newsboat -C "$XDG_CONFIG_HOME"/newsboat/config -u "$XDG_CONFIG_HOME"/newsboat/urls -c "$XDG_CACHE_HOME"/newsboat.db'
 alias utc='date -u +%H:%M:%S'
 alias vimr='vim -u NONE -U NONE -i NONE'
 alias gs="git status"
@@ -207,19 +193,6 @@ if command -v node > /dev/null 2>&1; then
   [ -d "$HOME/.yarn" ] && PATH=${PATH}:${HOME}/.yarn/bin
   [ -d "$HOME/.config/yarn" ] && PATH=${PATH}:${HOME}/.config/yarn/global/node_modules/.bin
   [ -d "$HOME/.node" ] && PATH=${PATH}:${HOME}/.node/bin
-fi
-
-# perl 5
-if [ -d "${HOME}/perl5" ]; then
-  PATH=${PATH}:${HOME}/perl5/bin
-  export PERL5LIB="/home/tomasino/perl5/lib/perl5${PERL5LIB:+:${PERL5LIB}}"
-  export PERL_LOCAL_LIB_ROOT="/home/tomasino/perl5${PERL_LOCAL_LIB_ROOT:+:${PERL_LOCAL_LIB_ROOT}}"
-  export PERL_MB_OPT="--install_base 'home/tomasino/perl5'"
-  export PERL_MM_OPT="INSTALL_BASE=/home/tomasino/perl5"
-  if [ -f "$HOME/perl5/perlbrew/etc/bashrc" ]; then
-    # shellcheck source=/dev/null
-    . "$HOME/perl5/perlbrew/etc/bashrc"
-  fi
 fi
 
 # android sdk
