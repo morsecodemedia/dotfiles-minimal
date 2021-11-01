@@ -1,0 +1,3 @@
+#!/bin/sh
+cd "${HOME}/Sites/personal/morse.sh"
+npm run shorten "$1" "$2"
