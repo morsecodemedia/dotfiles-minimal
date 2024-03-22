@@ -6,7 +6,7 @@
   helper = 'cache --timeout 3600'
 
 [github]
-  user = jamestomasino
+  user = morsecodemedia
 
 [gpg]
   program = gpg
@@ -15,8 +15,8 @@
   defaultBranch = main
 
 [tag]
-  gpgsign = true
-  forceSignAnnotated = true
+  gpgsign = false
+  forceSignAnnotated = false
 
 [core]
   whitespace = trailing-space, space-before-tab, cr-at-eol
@@ -170,3 +170,5 @@
 
   # Poor man's force-gpg-sign-tags
   tag = tag -s
+[pull]
+	rebase = false

@@ -8,13 +8,14 @@ export HISTIGNORE="clear:keybase*:lssh"
 # colors
 export LSCOLORS=gxfxcxdxbxggedabagacad
 export CLICOLOR=1
-export TERM=screen-256color
-LESS_TERMCAP_mb=$(tput bold; tput setaf 2 0 0); export LESS_TERMCAP_mb
-LESS_TERMCAP_md=$(tput bold; tput setaf 4 0 0); export LESS_TERMCAP_md
+export TERM="screen-256color"
+export COLORTERM=truecolor
+LESS_TERMCAP_mb=$(tput bold; tput setaf 2); export LESS_TERMCAP_mb
+LESS_TERMCAP_md=$(tput bold; tput setaf 4); export LESS_TERMCAP_md
 LESS_TERMCAP_me=$(tput sgr0); export LESS_TERMCAP_me
-LESS_TERMCAP_so=$(tput bold; tput setaf 7 0 0; tput setab 4 0 0); export LESS_TERMCAP_so
+LESS_TERMCAP_so=$(tput bold; tput setaf 7; tput setab 4); export LESS_TERMCAP_so
 LESS_TERMCAP_se=$(tput rmso; tput sgr0); export LESS_TERMCAP_se
-LESS_TERMCAP_us=$(tput smul; tput bold; tput setaf 9 0 0); export LESS_TERMCAP_us
+LESS_TERMCAP_us=$(tput smul; tput bold; tput setaf 9); export LESS_TERMCAP_us
 LESS_TERMCAP_ue=$(tput rmul; tput sgr0); export LESS_TERMCAP_ue
 LESS_TERMCAP_mr=$(tput rev); export LESS_TERMCAP_mr
 LESS_TERMCAP_mh=$(tput dim); export LESS_TERMCAP_mh
@@ -122,9 +123,11 @@ alias mkdir='mkdir -p'
 alias lynx='lynx -display_charset=utf8 --lss=/dev/null'
 alias utc='date -u +%H:%M:%S'
 alias vimr='vim -u NONE -U NONE -i NONE'
+alias gb="git branch"
 alias gs="git status"
 alias ag="ag --color-path 35 --color-match '1;35' --color-line-number 32"
 alias tmux='tmux -u2 -f "$XDG_CONFIG_HOME"/tmux/tmux.conf'
+alias tmate='tmate -u2 -f "$XDG_CONFIG_HOME"/tmux/tmux.conf'
 alias t='tmux attach || tmux new'
 alias beat='echo "x = (`date +%s` + 3600) % 86400; scale=3; x / 86.4" | bc'
 alias anonradio='mplayer -quiet http://anonradio.net:8000/anonradio'
@@ -148,10 +151,10 @@ if [ -z "$TS" ] || [ "$TS" = "" ] || [ "$TS" = "dash" ] || [ "$TS" = "sh" ]; the
   PS1=${PS1}'$(basename $(pwd)) ' # workingdir
   PS1=${PS1}"-> " # ->
 else
-  DIRECTORY_COLOR="\001$(tput setaf 12 0 0)\002";
-  PIPE_COLOR="\001$(tput setaf 241 0 0)\002";
-  PROMPT_COLOR="\001$(tput setaf 196 0 0)\002";
-  HOST_COLOR="\001$(tput setaf 245 0 0)\002"
+  DIRECTORY_COLOR="\001$(tput setaf 12)\002";
+  PIPE_COLOR="\001$(tput setaf 241)\002";
+  PROMPT_COLOR="\001$(tput setaf 196)\002";
+  HOST_COLOR="\001$(tput setaf 245)\002"
   RESET_COLOR="\001$(tput sgr0)\002"
   PS1="${HOST_COLOR}${HOSTNAME}" # [hostname]
   PS1=${PS1}"${PIPE_COLOR}|" # [hostname]
@@ -209,3 +212,6 @@ if [ -f "$HOME/.profile_local" ]; then
   # shellcheck source=/dev/null
   . "$HOME/.profile_local"
 fi
+
+export NVM_DIR="$HOME/.config/nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
