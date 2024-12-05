@@ -167,6 +167,8 @@ export PS1
 # system path
 path() { [ -d "$1" ] && PATH="${PATH}${PATH:+:}${1}"; }
 PATH=/bin
+path "/opt/homebrew/bin"
+path "/opt/homebrew/opt/coreutils/libexec/gnubin"
 path "/sbin"
 path "/usr/bin"
 path "/usr/sbin"
