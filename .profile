@@ -1,9 +1,10 @@
 # history
 export HISTFILE="$HOME/.history"
+export HISTTIMEFORMAT="%F %T "
 export HISTCONTRAL=ignoredups
-export HISTFILESIZE=10000
-export HISTSIZE=10000
-export HISTIGNORE="clear:keybase*:lssh"
+export HISTFILESIZE=100000
+export HISTSIZE=100000
+export HISTIGNORE="clear:keybase*:bssh:exit"
 
 # colors
 export LSCOLORS=gxfxcxdxbxggedabagacad
@@ -64,8 +65,25 @@ export NOTE_DIR="$DROPBOX_PATH/notes"
 
 # system
 export TZ="America/New_York"
+# sync
+export SYNCTHING_PATH="$HOME/.syncthing"
+export SSH_ENV="$HOME/.ssh/environment"
+export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR}/ssh-agent.socket"
+
+export SSH_KEY_LOCATIONS="${HOME}/.ssh/ ${HOME}/keys/personal/ssh/ ${HOME}/keys/work/ssh/"
+
+# personal app storage paths
+export TODO="$SYNCTHING_PATH/todo/personal.txt"
+export NOTE_DIR="$SYNCTHING_PATH/notes"
+export CONTACTS_DIR="$SYNCTHING_PATH/contacts"
+export TRACK_DIR="$SYNCTHING_PATH/track"
+export AUDIOBOOKS="${HOME}/pCloudDrive/Audiobooks/"
+export STATIONS="${SYNCTHING_PATH}/music/stations.txt"
+
+# system
 export LANG="en_US.UTF-8"
-export LC_ALL="en_US.UTF-8"
+export LC_TIME="en_GB.UTF-8"
+export ZPOOL_VDEV_NAME_PATH=YES
 
 # XDG
 export XDG_CONFIG_HOME="$HOME/.config"
@@ -73,25 +91,29 @@ export XDG_CACHE_HOME="$HOME/.cache"
 export XDG_DATA_HOME="$HOME/.local/share"
 
 # XDG Path Fixes
-export MPLAYER_HOME=$XDG_CONFIG_HOME/mplayer
 export LESSHISTFILE="${XDG_CONFIG_HOME}/less/history"
 export LESSKEY="${XDG_CONFIG_HOME}/less/keys"
 export NPM_CONFIG_USERCONFIG=$XDG_CONFIG_HOME/npm/config
 export NPM_CONFIG_CACHE=$XDG_CACHE_HOME/npm
 export NPM_CONFIG_TMP=$XDG_RUNTIME_DIR/npm
+export CALCHISTFILE=$XDG_DATA_HOME/calc_history
+export DOTREMINDERS=$XDG_CONFIG_HOME/remind/reminders
+export VIMINIT='let $MYVIMRC="$XDG_CONFIG_HOME/vim/vimrc" | source $MYVIMRC'
+alias ag='ag --path-to-ignore $XDG_CONFIG_HOME/ag/ignore'
+
+# GPG
+GPG_TTY=$(tty)
+export GPG_TTY
 
 # vim
 export EDITOR="vim"
-export VIMINIT='let $MYVIMRC="$XDG_CONFIG_HOME/vim/vimrc" | source $MYVIMRC'
+set -o vi
 
 # less settings
 export PAGER=less
 
 # umask liberal
 umask 0022
-
-# use vim on the command line
-set -o vi
 
 # Load functions
 if [ -d "${HOME}/.functions" ]; then
@@ -111,6 +133,15 @@ else
 fi
 
 alias ll='ls -lha'
+# Command overwrites
+alias mkdir='mkdir -p'
+alias grep='grep --color=auto'
+alias lynx='lynx -display_charset=utf8 --lss=/dev/null'
+alias tmux='tmux -u2 -f "$XDG_CONFIG_HOME"/tmux/tmux.conf'
+alias tmate='tmate -u2 -f "$XDG_CONFIG_HOME"/tmux/tmux.conf'
+alias ag="ag --color-path 35 --color-match '1;35' --color-line-number 32"
+alias newsboat='newsboat -C "$XDG_CONFIG_HOME"/newsboat/config -u "$XDG_CONFIG_HOME"/newsboat/urls -c "$XDG_CACHE_HOME"/newsboat.db'
+# Directory Helpers
 alias lsd='ls -Gl | grep "^d"'
 alias cd..="cd .."
 alias ..="cd .."
@@ -121,7 +152,15 @@ alias ......="cd ../../../../.."
 alias grep='grep --color=auto'
 alias mkdir='mkdir -p'
 alias lynx='lynx -display_charset=utf8 --lss=/dev/null'
+# Time Aliases
 alias utc='date -u +%H:%M:%S'
+alias beat='echo "x = ($(date +%s) + 3600) % 86400; scale=3; x / 86.4" | bc'
+alias beatTAI='echo "x = $(date +%s) % 86400; scale=3; x / 86.4" | bc'
+alias mil='echo "x = $(date +%s) % 86400; scale=3; x / 86400" | bc'
+alias julian='echo "x = $(date +%s); scale=5; x / 86400 + 2440587.5" | bc'
+alias getmusic="yt-dlp -x --audio-quality 0 --audio-format mp3"
+alias getplaylist="yt-dlp -x --audio-quality 0 --audio-format mp3 --yes-playlist"
+# General Helpers
 alias vimr='vim -u NONE -U NONE -i NONE'
 alias gb="git branch"
 alias gs="git status"
@@ -129,13 +168,8 @@ alias ag="ag --color-path 35 --color-match '1;35' --color-line-number 32"
 alias tmux='tmux -u2 -f "$XDG_CONFIG_HOME"/tmux/tmux.conf'
 alias tmate='tmate -u2 -f "$XDG_CONFIG_HOME"/tmux/tmux.conf'
 alias t='tmux attach || tmux new'
-alias beat='echo "x = (`date +%s` + 3600) % 86400; scale=3; x / 86.4" | bc'
-alias anonradio='mplayer -quiet http://anonradio.net:8000/anonradio'
-alias tilderadio='mplayer -quiet https://azuracast.tilderadio.org/radio/8000/320k.ogg'
-alias sleepbot='mplayer -quiet -playlist "http://www.sleepbot.com/ambience/cgi/listen.cgi/listen.pls"'
-alias wrti="mplayer -quiet http://playerservices.streamtheworld.com/api/livestream-redirect/WRTI_CLASSICAL.mp3"
-alias getmusic="youtube-dl -x --audio-quality 0 --audio-format mp3"
-alias getplaylist="youtube-dl -x --audio-quality 0 --audio-format mp3 --yes-playlist"
+alias mosh="export LC_ALL=\"en_US.UTF8\" && mosh"
+alias proxy="ssh -D 1337 -q -C -N"
 
 # PROMPT COMMANDS
 PROMPT_COMMAND="history -a; history -r; $PROMPT_COMMAND"
@@ -183,30 +217,50 @@ path "/snap/bin"
 path "/tilde/bin"
 path "${HOME}/bin"
 path "${HOME}/.yarn/bin"
+path "${HOME}/.npm-packages/bin"
 path "${HOME}/.config/yarn/global/node_modules/.bin"
 path "${HOME}/.node/bin"
 path "${HOME}/.local/bin"
 path "${HOME}/.fzf/bin"
-path "${HOME}/.npm-packages/bin"
 path "${HOME}/go/bin"
+path "/var/lib/flatpak/exports/share"
+path "${HOME}/.local/share/flatpak/exports/share"
 
 # javascript
+export NVM_DIR="$HOME/.config/nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 if command -v node > /dev/null 2>&1; then
   NPM_PACKAGES="${HOME}/.npm-packages"
   export NODE_PATH="/usr/local/lib/jsctags:/usr/local/lib/node:${HOME}/.yarn/bin:/usr/bin/npm"
   export MANPATH="${MANPATH-$(manpath)}:$NPM_PACKAGES/share/man"
-  [ -d "$HOME/.yarn" ] && PATH=${PATH}:${HOME}/.yarn/bin
-  [ -d "$HOME/.config/yarn" ] && PATH=${PATH}:${HOME}/.config/yarn/global/node_modules/.bin
-  [ -d "$HOME/.node" ] && PATH=${PATH}:${HOME}/.node/bin
+fi
+
+# deno
+if [ -d "${HOME}/.deno" ]; then
+  export DENO_INSTALL="${HOME}/.deno"
+  path "$DENO_INSTALL/bin"
+fi
+
+# perl 5
+if [ -d "${HOME}/perl5" ]; then
+  path "${HOME}/perl5/bin"
+  export PERL5LIB="${HOME}/perl5/lib/perl5${PERL5LIB:+:${PERL5LIB}}"
+  export PERL_LOCAL_LIB_ROOT="${HOME}/perl5${PERL_LOCAL_LIB_ROOT:+:${PERL_LOCAL_LIB_ROOT}}"
+  export PERL_MB_OPT="--install_base '${HOME}/perl5'"
+  export PERL_MM_OPT="INSTALL_BASE=${HOME}/perl5"
+  if [ -f "$HOME/perl5/perlbrew/etc/bashrc" ]; then
+    # shellcheck source=/dev/null
+    . "$HOME/perl5/perlbrew/etc/bashrc"
+  fi
 fi
 
 # android sdk
 if [ -d "${HOME}/sdk/" ]; then
   export ANDROID_HOME="/usr/lib/android-sdk"
-  PATH=${PATH}:${ANDROID_HOME}/tools
-  PATH=${PATH}:${ANDROID_HOME}/tools/bin
-  PATH=${PATH}:${ANDROID_HOME}/platform-tools
-  PATH=${PATH}:${ANDROID_HOME}/build-tools/25.0.3
+  path "${ANDROID_HOME}/tools"
+  path "${ANDROID_HOME}/tools/bin"
+  path "${ANDROID_HOME}/platform-tools"
+  path "${ANDROID_HOME}/build-tools/25.0.3"
 fi
 
 # Load local system overrides

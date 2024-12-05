@@ -67,16 +67,19 @@
   cmd = vim -f -c \"Gvdiffsplit!\" \"$MERGED\"
 
 [branch]
-  autosetupmerge = true
+  autoSetupMerge = always
 
 [push]
-  default = matching
+  followTags = true
+  default = current
+  autoSetupRemote = true
 
 [fetch]
   prune = true
 
 [rebase]
   autosquash = true
+	autoStash = true
 
 [advice]
   statusHints = true
@@ -98,14 +101,15 @@
   changed = green
   untracked = cyan
 
-[filter "lfs"]
-  clean = git-lfs clean -- %f
-  smudge = git-lfs smudge -- %f
-  process = git-lfs filter-process
-  required = true
+[safe]
+  directory = /var/cosmic
+  directory = /opt/cosmic-gemini
 
-[http "https://git.gsw.agency"]
-  sslVerify = false
+[notes]
+  displayRef = refs/notes/*
+
+[remote "origin"]
+  fetch = +refs/notes/*:refs/notes/*
 
 [alias]
 
@@ -118,11 +122,14 @@
   # get biggest file according to repo history
   biggest = "!git rev-list --objects --all | grep `git verify-pack -v .git/objects/pack/*.idx | sort -k 3 -n | tail -1 | awk '{ print $1 }'`"
 
-  # remove a file or folder from git history. Will require a push -f
-  balefire = "!f() { git filter-branch --index-filter \"git rm -rf --cached --ignore-unmatch $1\" HEAD; rm -rf .git/refs/original/ ; git reflog expire --all ; git gc --aggressive --prune; }; f"
+  # remove a file or folder from git history. Will require a push -f. You might have to re-add the remote too.
+  balefire = "git filter-repo --invert-paths --path $1"
 
   # remove all remote branches that have been merged
   removeallmerged = "!git branch --merged | grep -v \"\\*\" | xargs -n 1 git branch -d"
+
+  # remove all files from repo that are ignored by gitignore
+  removeignored = "!git rm --cached $(git ls-files -i -c -X .gitignore)"
 
   # push to all remotes
   pushall = "!git remote | xargs -L1 git push --all"
@@ -167,8 +174,6 @@
   # https://github.com/prabirshrestha/ProfilesAndSettings/blob/master/.gitconfig
   # show tags and any tag annotation (tito adds tag annotations for example)
   tags = tag -n1 -l
-
-  # Poor man's force-gpg-sign-tags
-  tag = tag -s
+	coffee = !curl -L https://git.io/coffee
 [pull]
-	rebase = false
+	rebase = true
