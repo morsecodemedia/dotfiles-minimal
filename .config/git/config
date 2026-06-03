@@ -1,6 +1,7 @@
 [user]
   name = Brandon Morse
   email = brandon@morsecodemedia.com
+	signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL8Y3Hn/thg1+cKAa0W9f6Ys5fzrzanuyBI+Nk/X1ooX
 
 [credential]
   helper = 'cache --timeout 3600'
@@ -10,12 +11,13 @@
 
 [gpg]
   program = gpg
+	format = ssh
 
 [init]
   defaultBranch = main
 
 [tag]
-  gpgsign = false
+	gpgsign = true
   forceSignAnnotated = false
 
 [core]
@@ -177,3 +179,7 @@
 	coffee = !curl -L https://git.io/coffee
 [pull]
 	rebase = true
+[gpg "ssh"]
+	program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
+[commit]
+	gpgsign = true

@@ -73,7 +73,7 @@ export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR}/ssh-agent.socket"
 export SSH_KEY_LOCATIONS="${HOME}/.ssh/ ${HOME}/keys/personal/ssh/ ${HOME}/keys/work/ssh/"
 
 # personal app storage paths
-export TODO="$SYNCTHING_PATH/todo/personal.txt"
+export TODO="${HOME}/Documents/todo/personal.txt"
 export NOTE_DIR="$SYNCTHING_PATH/notes"
 export CONTACTS_DIR="$SYNCTHING_PATH/contacts"
 export TRACK_DIR="$SYNCTHING_PATH/track"
@@ -89,6 +89,7 @@ export ZPOOL_VDEV_NAME_PATH=YES
 export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_CACHE_HOME="$HOME/.cache"
 export XDG_DATA_HOME="$HOME/.local/share"
+export XDG_RUNTIME_DIR="/tmp/xdg_runtime"
 
 # XDG Path Fixes
 export LESSHISTFILE="${XDG_CONFIG_HOME}/less/history"
@@ -132,7 +133,6 @@ else
   alias ls='ls --color'
 fi
 
-alias ll='ls -lha'
 # Command overwrites
 alias mkdir='mkdir -p'
 alias grep='grep --color=auto'
@@ -142,6 +142,7 @@ alias tmate='tmate -u2 -f "$XDG_CONFIG_HOME"/tmux/tmux.conf'
 alias ag="ag --color-path 35 --color-match '1;35' --color-line-number 32"
 alias newsboat='newsboat -C "$XDG_CONFIG_HOME"/newsboat/config -u "$XDG_CONFIG_HOME"/newsboat/urls -c "$XDG_CACHE_HOME"/newsboat.db'
 # Directory Helpers
+alias ll='ls -lha'
 alias lsd='ls -Gl | grep "^d"'
 alias cd..="cd .."
 alias ..="cd .."
@@ -170,7 +171,9 @@ alias tmate='tmate -u2 -f "$XDG_CONFIG_HOME"/tmux/tmux.conf'
 alias t='tmux attach || tmux new'
 alias mosh="export LC_ALL=\"en_US.UTF8\" && mosh"
 alias proxy="ssh -D 1337 -q -C -N"
-
+alias dskill="find . -name '*.DS_Store' -type f -ls -delete"
+alias reload="source ~/.profile && clear"
+alias phpserver="php -S localhost:8080"
 # PROMPT COMMANDS
 PROMPT_COMMAND="history -a; history -r; $PROMPT_COMMAND"
 
@@ -203,6 +206,7 @@ path() { [ -d "$1" ] && PATH="${PATH}${PATH:+:}${1}"; }
 PATH=/bin
 path "/opt/homebrew/bin"
 path "/opt/homebrew/opt/coreutils/libexec/gnubin"
+path "/opt/homebrew/opt/make/libexec/gnubin"
 path "/sbin"
 path "/usr/bin"
 path "/usr/sbin"
@@ -229,10 +233,9 @@ path "${HOME}/.local/share/flatpak/exports/share"
 # javascript
 export NVM_DIR="$HOME/.config/nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 if command -v node > /dev/null 2>&1; then
   NPM_PACKAGES="${HOME}/.npm-packages"
-  export NODE_PATH="/usr/local/lib/jsctags:/usr/local/lib/node:${HOME}/.yarn/bin:/usr/bin/npm"
-  export MANPATH="${MANPATH-$(manpath)}:$NPM_PACKAGES/share/man"
 fi
 
 # deno
@@ -269,5 +272,7 @@ if [ -f "$HOME/.profile_local" ]; then
   . "$HOME/.profile_local"
 fi
 
-export NVM_DIR="$HOME/.config/nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+export PATH="/opt/homebrew/opt/libxml2/bin:$PATH"
+
+# Created by `pipx` on 2025-07-08 17:22:34
+export PATH="$PATH:/Users/brandonmorse/.local/bin"
