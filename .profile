@@ -176,6 +176,15 @@ alias reload="source ~/.profile && clear"
 alias phpserver="php -S localhost:8080"
 # PROMPT COMMANDS
 PROMPT_COMMAND="history -a; history -r; $PROMPT_COMMAND"
+# LLAMA HELPERS
+
+# Launch background server for VS Code / Continue
+alias code-server="/usr/local/bin/llama-server -dev MTL0 --n-gpu-layers 999 --flash-attn on --ctx-size 8192 --port 8080 -m /Users/brandonmorse/Sites/models/qwen2.5-coder-14b-instruct-q8_0.gguf"
+
+# Launch instant interactive terminal chat for academic research
+alias research="/usr/local/bin/llama-cli -dev MTL0 --n-gpu-layers 999 --flash-attn on --ctx-size 16384 -cnv --color on -m /Users/brandonmorse/Sites/models/qwen2.5-coder-14b-instruct-q8_0.gguf"
+
+
 
 # use color in prompt if not dash. Color works there, but screws up line wrapping
 USER=$(id -un)
@@ -276,3 +285,8 @@ export PATH="/opt/homebrew/opt/libxml2/bin:$PATH"
 
 # Created by `pipx` on 2025-07-08 17:22:34
 export PATH="$PATH:/Users/brandonmorse/.local/bin"
+
+# Added by LM Studio CLI (lms)
+export PATH="$PATH:/Users/brandonmorse/.lmstudio/bin"
+# End of LM Studio CLI section
+
