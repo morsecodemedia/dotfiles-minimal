@@ -23,10 +23,12 @@ tryfiles () {
   if [ -d "${DIR}/${path}" ]; then
     pushd "${DIR}/${path}" || return
     mkdir -p "${HOME}/${path}"
+    shopt -s nullglob
     for f in *; do
       local newpath="${path}/${f}"
       tryfiles "${newpath}"
     done
+    shopt -u nullglob
     popd || return
   else
     if [ -L "${HOME}/${path}" ]; then
