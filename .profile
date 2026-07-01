@@ -94,13 +94,6 @@ export PAGER=less
 # umask liberal
 umask 0022
 
-# Load functions
-if [ -d "${HOME}/.functions" ]; then
-  for f in "${HOME}/.functions/"*; do
-    # shellcheck source=/dev/null
-    . "$f"
-  done
-fi
 
 # basic shell aliases
 if command -v colorls > /dev/null 2>&1; then
