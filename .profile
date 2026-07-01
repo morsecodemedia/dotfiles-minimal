@@ -1,10 +1,15 @@
+## History
+# shellcheck source=/dev/null
+#"$XDG_CONFIG_HOME/bash/modules/history.bash"
 # history
 export HISTFILE="$HOME/.history"
 export HISTTIMEFORMAT="%F %T "
-export HISTCONTRAL=ignoredups
+export HISTCONTROL=ignoredups
 export HISTFILESIZE=100000
 export HISTSIZE=100000
 export HISTIGNORE="clear:keybase*:exit"
+
+PROMPT_COMMAND="history -a; history -r; $PROMPT_COMMAND"
 
 # colors
 export LSCOLORS=gxfxcxdxbxggedabagacad
@@ -169,8 +174,6 @@ alias proxy="ssh -D 1337 -q -C -N"
 alias dskill="find . -name '*.DS_Store' -type f -ls -delete"
 alias reload="source ~/.profile && clear"
 alias phpserver="php -S localhost:8080"
-# PROMPT COMMANDS
-PROMPT_COMMAND="history -a; history -r; $PROMPT_COMMAND"
 # LLAMA HELPERS
 
 # Launch background server for VS Code / Continue

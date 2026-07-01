@@ -29,11 +29,14 @@ tryfiles () {
     done
     popd || return
   else
-    if [ -e "${HOME}/${path}" ]; then
-      printf "File Exists, Skipping: %s\\n" "${HOME}/${path}"
+    if [ -L "${HOME}/${path}" ]; then
+      ln -sfn "${DIR}/${path}" "${HOME}/${path}"
+      printf "Updating Symlink: %s\n" "${HOME}/${path}"
+    elif [ -e "${HOME}/${path}" ]; then
+      printf "File Exists, Skipping: %s\n" "${HOME}/${path}"
     else
-      ln -sfn "${DIR}/${path}" "$HOME/${path}"
-      printf "Linking: %s/%s\\n" "${DIR}" "${path}"
+      ln -sfn "${DIR}/${path}" "${HOME}/${path}"
+      printf "Linking: %s\n" "${HOME}/${path}"
     fi
   fi
 }

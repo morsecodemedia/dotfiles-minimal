@@ -1,0 +1,5 @@
+- Repair outdated symlinks
+- Add --dry-run
+- Add --verify
+- Add better reporting
+- Prepare for host-specific configuration
