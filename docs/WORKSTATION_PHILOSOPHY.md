@@ -1,3 +1,5 @@
+- No inherited complexity without inherited understanding.
+
 - Measure before optimizing.
 - Common configuration first, host-specific overrides second.
 - Every dependency must justify itself.
