@@ -150,7 +150,6 @@ alias ...="cd ../.."
 alias ....="cd ../../.."
 alias .....="cd ../../../.."
 alias ......="cd ../../../../.."
-alias mkdir='mkdir -p'
 alias lynx='lynx -display_charset=utf8 --lss=/dev/null'
 # Time Aliases
 alias utc='date -u +%H:%M:%S'
