@@ -163,9 +163,6 @@ alias getplaylist="yt-dlp -x --audio-quality 0 --audio-format mp3 --yes-playlist
 alias vimr='vim -u NONE -U NONE -i NONE'
 alias gb="git branch"
 alias gs="git status"
-alias ag="ag --color-path 35 --color-match '1;35' --color-line-number 32"
-alias tmux='tmux -u2 -f "$XDG_CONFIG_HOME"/tmux/tmux.conf'
-alias tmate='tmate -u2 -f "$XDG_CONFIG_HOME"/tmux/tmux.conf'
 alias t='tmux attach || tmux new'
 alias mosh="export LC_ALL=\"en_US.UTF8\" && mosh"
 alias proxy="ssh -D 1337 -q -C -N"
