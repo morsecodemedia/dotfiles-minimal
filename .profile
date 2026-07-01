@@ -4,7 +4,7 @@ export HISTTIMEFORMAT="%F %T "
 export HISTCONTRAL=ignoredups
 export HISTFILESIZE=100000
 export HISTSIZE=100000
-export HISTIGNORE="clear:keybase*:bssh:exit"
+export HISTIGNORE="clear:keybase*:exit"
 
 # colors
 export LSCOLORS=gxfxcxdxbxggedabagacad
