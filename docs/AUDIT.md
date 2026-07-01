@@ -16,10 +16,28 @@
 - [ ] AI Integration
 
 ---
+## PATH Audit
+
+| Path | Purpose | Still Used? | Decision |
+|------|---------|-------------|----------|
+
 
 ## Findings
 
-_To be completed during the audit._
+### Finding #002
+
+Area: Shell / Colors
+
+Status: Investigating
+
+Observation:
+- Colored man pages work.
+- LESS_TERMCAP variables are exported but empty.
+- Modern macOS appears to no longer rely on these variables for colored man pages.
+
+Decision:
+Defer removal until verified by temporarily commenting out the LESS_TERMCAP section.
+
 
 ### Current workflow
 - How often do you bootstrap a new machine (Once every few years? More often?)
