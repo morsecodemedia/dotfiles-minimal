@@ -231,8 +231,6 @@ path "${HOME}/.node/bin"
 path "${HOME}/.local/bin"
 path "${HOME}/.fzf/bin"
 path "${HOME}/go/bin"
-path "/var/lib/flatpak/exports/share"
-path "${HOME}/.local/share/flatpak/exports/share"
 
 # javascript
 export NVM_DIR="$HOME/.config/nvm"
@@ -240,25 +238,6 @@ export NVM_DIR="$HOME/.config/nvm"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 if command -v node > /dev/null 2>&1; then
   NPM_PACKAGES="${HOME}/.npm-packages"
-fi
-
-# deno
-if [ -d "${HOME}/.deno" ]; then
-  export DENO_INSTALL="${HOME}/.deno"
-  path "$DENO_INSTALL/bin"
-fi
-
-# perl 5
-if [ -d "${HOME}/perl5" ]; then
-  path "${HOME}/perl5/bin"
-  export PERL5LIB="${HOME}/perl5/lib/perl5${PERL5LIB:+:${PERL5LIB}}"
-  export PERL_LOCAL_LIB_ROOT="${HOME}/perl5${PERL_LOCAL_LIB_ROOT:+:${PERL_LOCAL_LIB_ROOT}}"
-  export PERL_MB_OPT="--install_base '${HOME}/perl5'"
-  export PERL_MM_OPT="INSTALL_BASE=${HOME}/perl5"
-  if [ -f "$HOME/perl5/perlbrew/etc/bashrc" ]; then
-    # shellcheck source=/dev/null
-    . "$HOME/perl5/perlbrew/etc/bashrc"
-  fi
 fi
 
 
