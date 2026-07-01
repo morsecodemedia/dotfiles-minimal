@@ -5,8 +5,8 @@
 ############################################################
 # Load functions
 if [ -d "${HOME}/.functions" ]; then
-  for f in "${HOME}/.functions/"*; do
+  for function_file in "${HOME}/.functions/"*; do
     # shellcheck source=/dev/null
-    . "$f"
+    . "$function_file"
   done
 fi
