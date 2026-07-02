@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+printf "\n"
+printf "NextGen Workstation Doctor\n"
+printf "==========================\n\n"
+
+check() {
+    local name="$1"
+    local command="$2"
+
+    if eval "$command" >/dev/null 2>&1; then
+        printf "✓ %-12s\n" "$name"
+    else
+        printf "✗ %-12s\n" "$name"
+    fi
+}
+
+check "Git" "command -v git"
+check "Bash" "command -v bash"
+check "Node" "command -v node"
+check "npm" "command -v npm"
+check "tmux" "command -v tmux"
+check "ctx" "command -v ctx"
