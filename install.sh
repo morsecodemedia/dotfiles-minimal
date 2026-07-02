@@ -33,12 +33,12 @@ tryfiles () {
   else
     if [ -L "${HOME}/${path}" ]; then
       ln -sfn "${DIR}/${path}" "${HOME}/${path}"
-      printf "Updating Symlink: %s\n" "${HOME}/${path}"
+      printf "%-8s %s\n" "UPDATE" "${HOME}/${path}"
     elif [ -e "${HOME}/${path}" ]; then
-      printf "File Exists, Skipping: %s\n" "${HOME}/${path}"
+      printf "%-8s %s\n" "SKIP" "${HOME}/${path}"
     else
       ln -sfn "${DIR}/${path}" "${HOME}/${path}"
-      printf "Linking: %s\n" "${HOME}/${path}"
+      printf "%-8s %s\n" "LINK" "${HOME}/${path}"
     fi
   fi
 }
