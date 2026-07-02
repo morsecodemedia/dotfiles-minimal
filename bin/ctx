@@ -1,12 +1,47 @@
-#!/usr/bin/env bash
+##!/usr/bin/env bash
 
-echo "NextGen Workstation Context"
-echo
-echo "Working Directory:"
-pwd
-echo
-echo "Git Branch:"
-git branch --show-current 2>/dev/null || echo "Not a Git repository"
-echo
-echo "Node:"
-node -v 2>/dev/null || echo "Not available"
+set -euo pipefail
+
+printf "\n"
+printf "NextGen Workstation Context\n"
+printf "===========================\n\n"
+
+printf "Project\n"
+
+if git rev-parse --show-toplevel >/dev/null 2>&1; then
+    ROOT=$(git rev-parse --show-toplevel)
+    BRANCH=$(git branch --show-current)
+    DIRTY="No"
+
+    if ! git diff --quiet || ! git diff --cached --quiet; then
+        DIRTY="Yes"
+    fi
+
+    printf "  Root      %s\n" "$ROOT"
+    printf "  Branch    %s\n" "$BRANCH"
+    printf "  Dirty     %s\n" "$DIRTY"
+else
+    printf "  Not a Git repository\n"
+fi
+
+printf "\nRuntime\n"
+
+printf "  Shell     %s\n" "${SHELL##*/}"
+
+if command -v node >/dev/null 2>&1; then
+    printf "  Node      %s\n" "$(node -v)"
+fi
+
+if command -v npm >/dev/null 2>&1; then
+    printf "  npm       %s\n" "$(npm -v)"
+fi
+
+printf "\nEnvironment\n"
+
+printf "  Host      %s\n" "$(hostname)"
+
+if [ -n "${TMUX:-}" ]; then
+    printf "  tmux      Yes\n"
+else
+    printf "  tmux      No\n"
+fi
