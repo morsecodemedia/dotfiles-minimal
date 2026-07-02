@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+ROLE="${1:-}"
+
+shift || true
+
+case "$ROLE" in
+
+engineer)
+
+    ctx
+
+    printf "\n"
+    printf "Launching engineering assistant...\n"
+
+    exec llama-cli \
+        -dev MTL0 \
+        --n-gpu-layers 999 \
+        --flash-attn on \
+        --ctx-size 16384 \
+        -cnv \
+        --color on \
+        -m "$HOME/Sites/models/qwen2.5-coder-14b-instruct-q8_0.gguf"
+
+    ;;
+
+*)
+
+    cat <<EOF
+
+Usage:
+
+    ai engineer
+
+EOF
+
+    exit 1
+
+    ;;
+
+esac
