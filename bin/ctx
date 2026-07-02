@@ -24,6 +24,18 @@ else
     printf "  Not a Git repository\n"
 fi
 
+if [ -f "${ROOT}/package.json" ]; then
+    printf "\nProject\n"
+
+    printf "  Type      Node\n"
+
+    if [ -f "${ROOT}/vite.config.js" ] || \
+       [ -f "${ROOT}/vite.config.mjs" ] || \
+       [ -f "${ROOT}/vite.config.ts" ]; then
+        printf "  Framework Vite\n"
+    fi
+fi
+
 printf "\nRuntime\n"
 
 printf "  Shell     %s\n" "${SHELL##*/}"
