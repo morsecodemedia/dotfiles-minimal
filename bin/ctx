@@ -2,6 +2,60 @@
 
 set -euo pipefail
 
+JSON_OUTPUT=false
+
+if [[ "${1:-}" == "--json" ]]; then
+    JSON_OUTPUT=true
+fi
+
+if $JSON_OUTPUT; then
+
+    ROOT=""
+    BRANCH=""
+    DIRTY=false
+    NODE_VERSION=""
+    NPM_VERSION=""
+
+    if git rev-parse --show-toplevel >/dev/null 2>&1; then
+        ROOT=$(git rev-parse --show-toplevel)
+        BRANCH=$(git branch --show-current)
+
+        if ! git diff --quiet || ! git diff --cached --quiet; then
+            DIRTY=true
+        fi
+    fi
+
+    if command -v node >/dev/null 2>&1; then
+        NODE_VERSION=$(node -v)
+    fi
+
+    if command -v npm >/dev/null 2>&1; then
+        NPM_VERSION=$(npm -v)
+    fi
+
+    cat <<EOF
+{
+  "repository": {
+    "root": "$ROOT",
+    "branch": "$BRANCH",
+    "dirty": $DIRTY
+  },
+  "runtime": {
+    "shell": "${SHELL##*/}",
+    "node": "$NODE_VERSION",
+    "npm": "$NPM_VERSION"
+  },
+  "workstation": {
+    "host": "$(hostname)",
+    "tmux": $([ -n "${TMUX:-}" ] && echo true || echo false)
+  }
+}
+EOF
+
+    exit 0
+fi
+
+
 printf "\n"
 printf "NextGen Workstation Context\n"
 printf "===========================\n\n"
