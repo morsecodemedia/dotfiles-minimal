@@ -62,40 +62,4 @@ export PAGER=less
 # umask liberal
 umask 0022
 
-# system path
-path() { [ -d "$1" ] && PATH="${PATH}${PATH:+:}${1}"; }
-PATH=/bin
-path "/opt/homebrew/bin"
-path "/opt/homebrew/opt/coreutils/libexec/gnubin"
-path "/opt/homebrew/opt/make/libexec/gnubin"
-path "/sbin"
-path "/usr/bin"
-path "/usr/sbin"
-path "/usr/games"
-path "/usr/pkg/bin"
-path "/usr/local/sbin"
-path "/usr/local/bin"
-path "/usr/X11/bin"
-path "/opt/local/bin"
-path "/opt/local/sbin"
-path "/snap/bin"
-path "/tilde/bin"
-path "${HOME}/bin"
-path "${HOME}/.yarn/bin"
-path "${HOME}/.npm-packages/bin"
-path "${HOME}/.config/yarn/global/node_modules/.bin"
-path "${HOME}/.node/bin"
-path "${HOME}/.local/bin"
-path "${HOME}/.fzf/bin"
-path "${HOME}/go/bin"
-
-
-export PATH="/opt/homebrew/opt/libxml2/bin:$PATH"
-
-# Created by `pipx` on 2025-07-08 17:22:34
-export PATH="$PATH:/Users/brandonmorse/.local/bin"
-
-# Added by LM Studio CLI (lms)
-export PATH="$PATH:/Users/brandonmorse/.lmstudio/bin"
-# End of LM Studio CLI section
 
