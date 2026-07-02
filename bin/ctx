@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+echo "NextGen Workstation Context"
+echo
+echo "Working Directory:"
+pwd
+echo
+echo "Git Branch:"
+git branch --show-current 2>/dev/null || echo "Not a Git repository"
+echo
+echo "Node:"
+node -v 2>/dev/null || echo "Not available"
