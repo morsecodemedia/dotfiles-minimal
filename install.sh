@@ -33,12 +33,20 @@ tryfiles () {
   else
     if [ -L "${HOME}/${path}" ]; then
       ln -sfn "${DIR}/${path}" "${HOME}/${path}"
-      printf "%-8s %s\n" "UPDATE" "${HOME}/${path}"
+      printf "%-8s %s\n" \
+        "UPDATE" \
+        "${HOME}/${path}" \
+        "${DIR}/${path}"
     elif [ -e "${HOME}/${path}" ]; then
-      printf "%-8s %s\n" "SKIP" "${HOME}/${path}"
+      printf "%-8s %s\n" \
+        "SKIP" \
+        "${HOME}/${path}"
     else
       ln -sfn "${DIR}/${path}" "${HOME}/${path}"
-      printf "%-8s %s\n" "LINK" "${HOME}/${path}"
+      printf "%-8s %s\n" \
+        "LINK" \
+        "${HOME}/${path}" \
+        "${DIR}/${path}"
     fi
   fi
 }
