@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+SCRIPT_DIR="$(
+    cd "$(dirname "${BASH_SOURCE[0]}")" && pwd
+)"
+
+WORKSTATION_ROOT="$(
+    cd "$SCRIPT_DIR/.." && pwd
+)"
+
+TASK_FILE=".current-task"
+
+if ! git rev-parse --show-toplevel >/dev/null 2>&1; then
+    printf "Not inside a Git repository.\n"
+    exit 1
+fi
+
+ROOT="$(git rev-parse --show-toplevel)"
+TASK_PATH="$ROOT/$TASK_FILE"
+
+if [[ $# -eq 0 ]]; then
+
+    if [[ -f "$TASK_PATH" ]]; then
+        cat "$TASK_PATH"
+    else
+        printf "No current task.\n"
+    fi
+
+    exit 0
+fi
+
+printf "%s\n" "$*" > "$TASK_PATH"
+
+printf "Current task updated.\n"
+printf "\n"
+
+cat "$TASK_PATH"
