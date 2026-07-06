@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+source "$HOME/lib/workstation.sh"
+
 printf "\n"
 printf "Engineering Situation Report\n"
 printf "==========================\n"
