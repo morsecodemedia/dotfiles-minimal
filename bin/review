@@ -4,6 +4,8 @@ set -euo pipefail
 
 source "$HOME/lib/workstation.sh"
 
+require_git
+
 heading "Engineering Situation Report"
 
 if ! git rev-parse --show-toplevel >/dev/null 2>&1; then
