@@ -2,11 +2,16 @@
 
 set -euo pipefail
 
-JSON_OUTPUT=false
+OUTPUT_MODE="human"
 
-if [[ "${1:-}" == "--json" ]]; then
-    JSON_OUTPUT=true
-fi
+case "${1:-}" in
+    --json)
+        OUTPUT_MODE="json"
+        ;;
+    --env)
+        OUTPUT_MODE="env"
+        ;;
+esac
 
 ###############################################################################
 # State
@@ -244,12 +249,39 @@ render_human() {
 
 }
 
+render_env() {
+
+cat <<EOF
+CTX_ROOT='$ROOT'
+CTX_BRANCH='$BRANCH'
+CTX_DIRTY='$DIRTY'
+CTX_CHANGED='$CHANGED_FILES'
+CTX_PROJECT_TYPE='$PROJECT_TYPE'
+CTX_PROJECT_FRAMEWORK='$PROJECT_FRAMEWORK'
+CTX_NODE='$NODE_VERSION'
+CTX_NPM='$NPM_VERSION'
+CTX_SHELL='$SHELL_NAME'
+CTX_HOST='$HOST_NAME'
+CTX_TMUX='$TMUX_RUNNING'
+EOF
+
+}
 ###############################################################################
 # Main
 ###############################################################################
 
-if $JSON_OUTPUT; then
-    render_json
-else
-    render_human
-fi
+case "$OUTPUT_MODE" in
+
+    json)
+        render_json
+        ;;
+
+    env)
+        render_env
+        ;;
+
+    *)
+        render_human
+        ;;
+
+esac
