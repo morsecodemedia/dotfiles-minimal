@@ -142,8 +142,10 @@ if [ ! -f "$ROOT/PLAN.md" ]; then
     printf "  ⚠ PLAN.md is missing\n"
 fi
 
-if [ ! -f "$ROOT/.nvmrc" ] && [ -f "$ROOT/package.json" ]; then
-    printf "  ⚠ Node project has no .nvmrc\n"
+if [ -f "$ROOT/package.json" ]; then
+    if [ ! -f "$ROOT/.nvmrc" ]; then
+        printf "  ⚠ Node project has no .nvmrc\n"
+    fi
 fi
 
 printf "\nNext Steps\n"
