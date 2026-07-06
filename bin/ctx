@@ -13,6 +13,7 @@ if $JSON_OUTPUT; then
     ROOT=""
     BRANCH=""
     DIRTY=false
+    CHANGED_FILES=0
     NODE_VERSION=""
     NPM_VERSION=""
 
@@ -24,7 +25,6 @@ if $JSON_OUTPUT; then
             DIRTY=true
         fi
     fi
-
     if command -v node >/dev/null 2>&1; then
         NODE_VERSION=$(node -v)
     fi
@@ -70,10 +70,15 @@ if git rev-parse --show-toplevel >/dev/null 2>&1; then
     if ! git diff --quiet || ! git diff --cached --quiet; then
         DIRTY="Yes"
     fi
+    
+    CHANGED_FILES=$(
+      git status --porcelain 2>/dev/null | wc -l | tr -d ' '
+    )
 
     printf "  Root      %s\n" "$ROOT"
     printf "  Branch    %s\n" "$BRANCH"
     printf "  Dirty     %s\n" "$DIRTY"
+    printf "  Changed   %s\n" "$CHANGED_FILES"
 else
     printf "  Not a Git repository\n"
 fi
@@ -101,6 +106,31 @@ fi
 if command -v npm >/dev/null 2>&1; then
     printf "  npm       %s\n" "$(npm -v)"
 fi
+
+printf "\nProject Files\n"
+
+ROOT="${ROOT:-$(pwd)}"
+
+check_file() {
+    local label="$1"
+    local file="$2"
+
+    if [ -f "$ROOT/$file" ]; then
+        printf "  ✓ %-12s %s\n" "$label" "$file"
+    else
+        printf "  ✗ %-12s %s\n" "$label" "$file"
+    fi
+}
+
+check_file "README" "README.md"
+check_file "Plan" "PLAN.md"
+check_file "Roadmap" "ROADMAP.md"
+check_file "Architecture" "ARCHITECTURE.md"
+check_file "AI" "AI_SUBSYSTEM.md"
+check_file "Git Ignore" ".gitignore"
+check_file "EditorConfig" ".editorconfig"
+check_file "Package" "package.json"
+check_file "NVM" ".nvmrc"
 
 printf "\nEnvironment\n"
 
