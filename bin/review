@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+printf "\n"
+printf "NextGen Workstation Review\n"
+printf "==========================\n"
+
+if ! git rev-parse --show-toplevel >/dev/null 2>&1; then
+    printf "\nNot inside a Git repository.\n"
+    exit 1
+fi
+
+printf "\nRepository\n"
+
+printf "  Branch    %s\n" "$(git branch --show-current)"
+
+DIRTY="No"
+
+if [[ -n "$(git status --porcelain)" ]]; then
+    DIRTY="Yes"
+fi
+
+printf "  Dirty     %s\n" "$DIRTY"
+
+printf "\nChanges\n"
+printf "────────────────────────\n\n"
+
+ADDED=0
+MODIFIED=0
+DELETED=0
+RENAMED=0
+
+while IFS= read -r line; do
+
+    status="${line:0:2}"
+
+    case "$status" in
+        "A "|"??")
+            ((ADDED++))
+            ;;
+        " M"|"M ")
+            ((MODIFIED++))
+            ;;
+        " D"|"D ")
+            ((DELETED++))
+            ;;
+        R*)
+            ((RENAMED++))
+            ;;
+    esac
+
+done < <(git status --porcelain)
+
+printf "  Added      %d\n" "$ADDED"
+printf "  Modified   %d\n" "$MODIFIED"
+printf "  Deleted    %d\n" "$DELETED"
+printf "  Renamed    %d\n" "$RENAMED"
+
+printf "\nFiles\n"
+printf "────────────────────────\n\n"
+
+git status --short
+
+DIFF_STAT="$(git diff --stat)"
+
+if [[ -n "$DIFF_STAT" ]]; then
+    printf "\nDiff Summary\n"
+    printf "────────────────────────\n\n"
+
+    printf "%s\n" "$DIFF_STAT"
+fi
