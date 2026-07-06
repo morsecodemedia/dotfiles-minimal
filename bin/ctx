@@ -132,6 +132,30 @@ check_file "EditorConfig" ".editorconfig"
 check_file "Package" "package.json"
 check_file "NVM" ".nvmrc"
 
+printf "\nEngineering Health\n"
+
+if [ "$DIRTY" = "Yes" ]; then
+    printf "  ⚠ Repository has uncommitted changes\n"
+fi
+
+if [ ! -f "$ROOT/PLAN.md" ]; then
+    printf "  ⚠ PLAN.md is missing\n"
+fi
+
+if [ ! -f "$ROOT/.nvmrc" ] && [ -f "$ROOT/package.json" ]; then
+    printf "  ⚠ Node project has no .nvmrc\n"
+fi
+
+printf "\nNext Steps\n"
+
+if [ "$DIRTY" = "Yes" ]; then
+    printf "  • Review changes with: git diff\n"
+fi
+
+if [ ! -f "$ROOT/PLAN.md" ]; then
+    printf "  • Consider creating PLAN.md before major work\n"
+fi
+
 printf "\nEnvironment\n"
 
 printf "  Host      %s\n" "$(hostname)"
