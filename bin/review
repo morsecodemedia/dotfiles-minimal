@@ -2,70 +2,119 @@
 
 set -euo pipefail
 
-source "$HOME/lib/workstation.sh"
+###############################################################################
+# Bootstrap
+###############################################################################
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORKSTATION_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# shellcheck source-path=SCRIPTDIR/..
+# shellcheck source=lib/workstation.sh
+source "$WORKSTATION_ROOT/lib/workstation.sh"
+
+eval "$(ctx --env)"
 
 require_git
 
-heading "Engineering Situation Report"
+###############################################################################
+# Review
+###############################################################################
 
-if ! git rev-parse --show-toplevel >/dev/null 2>&1; then
-    printf "\nNot inside a Git repository.\n"
-    exit 1
-fi
+collect_repository_state() {
 
-section "Repository"
+    DIRTY="No"
 
-printf "  Branch    %s\n" "$(git branch --show-current)"
+    if [[ -n "$(git status --porcelain)" ]]; then
+        DIRTY="Yes"
+    fi
+}
 
-DIRTY="No"
+collect_change_summary() {
 
-if [[ -n "$(git status --porcelain)" ]]; then
-    DIRTY="Yes"
-fi
+    ADDED=0
+    MODIFIED=0
+    DELETED=0
+    RENAMED=0
 
-printf "  Dirty     %s\n" "$DIRTY"
+    while IFS= read -r line; do
 
-section "Changes"
+        status="${line:0:2}"
 
-ADDED=0
-MODIFIED=0
-DELETED=0
-RENAMED=0
+        case "$status" in
+            "A "|"??")
+                ((ADDED++))
+                ;;
+            " M"|"M ")
+                ((MODIFIED++))
+                ;;
+            " D"|"D ")
+                ((DELETED++))
+                ;;
+            R*)
+                ((RENAMED++))
+                ;;
+        esac
 
-while IFS= read -r line; do
+    done < <(git status --porcelain)
 
-    status="${line:0:2}"
+}
 
-    case "$status" in
-        "A "|"??")
-            ((ADDED++))
-            ;;
-        " M"|"M ")
-            ((MODIFIED++))
-            ;;
-        " D"|"D ")
-            ((DELETED++))
-            ;;
-        R*)
-            ((RENAMED++))
-            ;;
-    esac
+render_repository() {
 
-done < <(git status --porcelain)
+    section "Repository"
 
-printf "  Added      %d\n" "$ADDED"
-printf "  Modified   %d\n" "$MODIFIED"
-printf "  Deleted    %d\n" "$DELETED"
-printf "  Renamed    %d\n" "$RENAMED"
+    printf "  Branch    %s\n" "$CTX_BRANCH"
+    printf "  Dirty     %s\n" "$DIRTY"
+}
 
-section "Files"
+render_changes() {
 
-git status --short
+    section "Changes"
 
-DIFF_STAT="$(git diff --stat)"
+    printf "  Added      %d\n" "$ADDED"
+    printf "  Modified   %d\n" "$MODIFIED"
+    printf "  Deleted    %d\n" "$DELETED"
+    printf "  Renamed    %d\n" "$RENAMED"
+}
 
-if [[ -n "$DIFF_STAT" ]]; then
-    section "Diff Summary"
+render_files() {
 
-    printf "%s\n" "$DIFF_STAT"
-fi
+    section "Files"
+
+    git status --short
+}
+
+render_diff_summary() {
+
+    local diff_stat
+
+    diff_stat="$(git diff --stat)"
+
+    if [[ -n "$diff_stat" ]]; then
+
+        section "Diff Summary"
+
+        printf "%s\n" "$diff_stat"
+
+    fi
+}
+
+###############################################################################
+# Main
+###############################################################################
+
+main() {
+
+    heading "Engineering Situation Report"
+
+    collect_repository_state
+    collect_change_summary
+
+    render_repository
+    render_changes
+    render_files
+    render_diff_summary
+}
+
+main "$@"

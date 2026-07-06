@@ -15,12 +15,17 @@ set -euo pipefail
 
 export WORKSTATION_ROOT
 
+WORKSTATION_CONFIG="$HOME/.config/nextgen-workstation/config"
+
+if [[ -f "$WORKSTATION_CONFIG" ]]; then
+    # shellcheck disable=SC1090
+    . "$WORKSTATION_CONFIG"
+fi
+
 WORKSTATION_ROOT="$(
     cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd
 )"
 
-# Load workstation context.
-eval "$(ctx --env)"
 
 ###############################################################################
 # Output Helpers
