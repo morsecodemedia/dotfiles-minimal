@@ -1,4 +1,4 @@
-##!/usr/bin/env bash
+#!/usr/bin/env bash
 
 set -euo pipefail
 
@@ -8,162 +8,248 @@ if [[ "${1:-}" == "--json" ]]; then
     JSON_OUTPUT=true
 fi
 
-if $JSON_OUTPUT; then
+###############################################################################
+# State
+###############################################################################
 
-    ROOT=""
-    BRANCH=""
-    DIRTY=false
-    CHANGED_FILES=0
-    NODE_VERSION=""
-    NPM_VERSION=""
+ROOT=""
+BRANCH=""
+DIRTY=false
+CHANGED_FILES=0
 
-    if git rev-parse --show-toplevel >/dev/null 2>&1; then
-        ROOT=$(git rev-parse --show-toplevel)
-        BRANCH=$(git branch --show-current)
+PROJECT_TYPE="Unknown"
+PROJECT_FRAMEWORK=""
 
-        if ! git diff --quiet || ! git diff --cached --quiet; then
-            DIRTY=true
-        fi
+NODE_VERSION=""
+NPM_VERSION=""
+SHELL_NAME="${SHELL##*/}"
+HOST_NAME="$(hostname)"
+TMUX_RUNNING=false
+
+[[ -n "${TMUX:-}" ]] && TMUX_RUNNING=true
+
+###############################################################################
+# Collection
+###############################################################################
+
+collect_repository() {
+
+    if ! git rev-parse --show-toplevel >/dev/null 2>&1; then
+        return
     fi
+
+    ROOT="$(git rev-parse --show-toplevel)"
+    BRANCH="$(git branch --show-current)"
+
+    if ! git diff --quiet || ! git diff --cached --quiet; then
+        DIRTY=true
+    fi
+
+    CHANGED_FILES=$(
+        git status --porcelain 2>/dev/null | wc -l | tr -d ' '
+    )
+
+    detect_project_type
+}
+
+collect_runtime() {
+
     if command -v node >/dev/null 2>&1; then
-        NODE_VERSION=$(node -v)
+        NODE_VERSION="$(node -v)"
     fi
 
     if command -v npm >/dev/null 2>&1; then
-        NPM_VERSION=$(npm -v)
+        NPM_VERSION="$(npm -v)"
     fi
-
-    cat <<EOF
-{
-  "repository": {
-    "root": "$ROOT",
-    "branch": "$BRANCH",
-    "dirty": $DIRTY
-  },
-  "runtime": {
-    "shell": "${SHELL##*/}",
-    "node": "$NODE_VERSION",
-    "npm": "$NPM_VERSION"
-  },
-  "workstation": {
-    "host": "$(hostname)",
-    "tmux": $([ -n "${TMUX:-}" ] && echo true || echo false)
-  }
 }
-EOF
 
-    exit 0
-fi
+detect_project_type() {
 
+    PROJECT_TYPE="Unknown"
+    PROJECT_FRAMEWORK=""
 
-printf "\n"
-printf "NextGen Workstation Context\n"
-printf "===========================\n\n"
+    if [[ -f "$ROOT/package.json" ]]; then
+        PROJECT_TYPE="Node"
 
-printf "Project\n"
+        if [[ -f "$ROOT/vite.config.js" ]] ||
+           [[ -f "$ROOT/vite.config.mjs" ]] ||
+           [[ -f "$ROOT/vite.config.ts" ]]; then
 
-if git rev-parse --show-toplevel >/dev/null 2>&1; then
-    ROOT=$(git rev-parse --show-toplevel)
-    BRANCH=$(git branch --show-current)
-    DIRTY="No"
+            PROJECT_TYPE="Vite"
+            PROJECT_FRAMEWORK="Vite"
+        fi
 
-    if ! git diff --quiet || ! git diff --cached --quiet; then
-        DIRTY="Yes"
+        return
     fi
-    
-    CHANGED_FILES=$(
-      git status --porcelain 2>/dev/null | wc -l | tr -d ' '
-    )
 
-    printf "  Root      %s\n" "$ROOT"
-    printf "  Branch    %s\n" "$BRANCH"
-    printf "  Dirty     %s\n" "$DIRTY"
-    printf "  Changed   %s\n" "$CHANGED_FILES"
-else
-    printf "  Not a Git repository\n"
-fi
+    if [[ -f "$ROOT/.profile" ]] &&
+       [[ -d "$ROOT/.profile.d" ]]; then
 
-if [ -f "${ROOT}/package.json" ]; then
-    printf "\nProject\n"
-
-    printf "  Type      Node\n"
-
-    if [ -f "${ROOT}/vite.config.js" ] || \
-       [ -f "${ROOT}/vite.config.mjs" ] || \
-       [ -f "${ROOT}/vite.config.ts" ]; then
-        printf "  Framework Vite\n"
+        PROJECT_TYPE="Shell Configuration"
+        return
     fi
-fi
+}
 
-printf "\nRuntime\n"
+###############################################################################
+# Evaluation
+###############################################################################
 
-printf "  Shell     %s\n" "${SHELL##*/}"
+has_file() {
+    [[ -f "$ROOT/$1" ]]
+}
 
-if command -v node >/dev/null 2>&1; then
-    printf "  Node      %s\n" "$(node -v)"
-fi
+project_file_status() {
 
-if command -v npm >/dev/null 2>&1; then
-    printf "  npm       %s\n" "$(npm -v)"
-fi
-
-printf "\nProject Files\n"
-
-ROOT="${ROOT:-$(pwd)}"
-
-check_file() {
     local label="$1"
     local file="$2"
 
-    if [ -f "$ROOT/$file" ]; then
+    if has_file "$file"; then
         printf "  ✓ %-12s %s\n" "$label" "$file"
     else
         printf "  ✗ %-12s %s\n" "$label" "$file"
     fi
 }
 
-check_file "README" "README.md"
-check_file "Plan" "PLAN.md"
-check_file "Roadmap" "ROADMAP.md"
-check_file "Architecture" "ARCHITECTURE.md"
-check_file "AI" "AI_SUBSYSTEM.md"
-check_file "Git Ignore" ".gitignore"
-check_file "EditorConfig" ".editorconfig"
-check_file "Package" "package.json"
-check_file "NVM" ".nvmrc"
+collect_repository
+collect_runtime
 
-printf "\nEngineering Health\n"
+###############################################################################
+# Rendering
+###############################################################################
 
-if [ "$DIRTY" = "Yes" ]; then
-    printf "  ⚠ Repository has uncommitted changes\n"
-fi
+render_json() {
 
-if [ ! -f "$ROOT/PLAN.md" ]; then
-    printf "  ⚠ PLAN.md is missing\n"
-fi
+cat <<EOF
+{
+  "repository": {
+    "root": "$ROOT",
+    "branch": "$BRANCH",
+    "dirty": $DIRTY,
+    "changed": $CHANGED_FILES,
+    "type": "$PROJECT_TYPE",
+    "framework": "$PROJECT_FRAMEWORK"
+  },
+  "runtime": {
+    "shell": "$SHELL_NAME",
+    "node": "$NODE_VERSION",
+    "npm": "$NPM_VERSION"
+  },
+  "environment": {
+    "host": "$HOST_NAME",
+    "tmux": $TMUX_RUNNING
+  }
+}
+EOF
 
-if [ -f "$ROOT/package.json" ]; then
-    if [ ! -f "$ROOT/.nvmrc" ]; then
-        printf "  ⚠ Node project has no .nvmrc\n"
+}
+
+render_human() {
+
+    printf "\n"
+    printf "NextGen Workstation Context\n"
+    printf "===========================\n"
+
+    printf "\nRepository\n"
+
+    if [[ -n "$ROOT" ]]; then
+
+        printf "  Root      %s\n" "$ROOT"
+        printf "  Branch    %s\n" "$BRANCH"
+        printf "  Type      %s\n" "$PROJECT_TYPE"
+
+        if [[ -n "$PROJECT_FRAMEWORK" ]]; then
+            printf "  Framework %s\n" "$PROJECT_FRAMEWORK"
+        fi
+
+        if $DIRTY; then
+            printf "  Dirty     Yes\n"
+        else
+            printf "  Dirty     No\n"
+        fi
+
+        printf "  Changed   %s\n" "$CHANGED_FILES"
+
+    else
+
+        printf "  Not a Git repository\n"
+
     fi
-fi
 
-printf "\nNext Steps\n"
+    printf "\nRuntime\n"
 
-if [ "$DIRTY" = "Yes" ]; then
-    printf "  • Review changes with: git diff\n"
-fi
+    printf "  Shell     %s\n" "$SHELL_NAME"
 
-if [ ! -f "$ROOT/PLAN.md" ]; then
-    printf "  • Consider creating PLAN.md before major work\n"
-fi
+    [[ -n "$NODE_VERSION" ]] &&
+        printf "  Node      %s\n" "$NODE_VERSION"
 
-printf "\nEnvironment\n"
+    [[ -n "$NPM_VERSION" ]] &&
+        printf "  npm       %s\n" "$NPM_VERSION"
 
-printf "  Host      %s\n" "$(hostname)"
+    if [[ -n "$ROOT" ]]; then
 
-if [ -n "${TMUX:-}" ]; then
-    printf "  tmux      Yes\n"
+        printf "\nProject Files\n"
+
+        project_file_status "README" "README.md"
+        project_file_status "Plan" "PLAN.md"
+        project_file_status "Roadmap" "ROADMAP.md"
+        project_file_status "Architecture" "ARCHITECTURE.md"
+        project_file_status "AI" "AI_SUBSYSTEM.md"
+        project_file_status "Git Ignore" ".gitignore"
+        project_file_status "EditorConfig" ".editorconfig"
+
+        if [[ "$PROJECT_TYPE" == "Node" || "$PROJECT_TYPE" == "Vite" ]]; then
+            project_file_status "Package" "package.json"
+            project_file_status "NVM" ".nvmrc"
+        fi
+
+        printf "\nEngineering Health\n"
+
+        if $DIRTY; then
+            printf "  ⚠ Repository has uncommitted changes\n"
+        fi
+
+        if ! has_file "PLAN.md"; then
+            printf "  ⚠ PLAN.md is missing\n"
+        fi
+
+        if [[ "$PROJECT_TYPE" == "Node" || "$PROJECT_TYPE" == "Vite" ]]; then
+            if ! has_file ".nvmrc"; then
+                printf "  ⚠ Node project has no .nvmrc\n"
+            fi
+        fi
+
+        printf "\nNext Steps\n"
+
+        if $DIRTY; then
+            printf "  • Review changes with: git diff\n"
+        fi
+
+        if ! has_file "PLAN.md"; then
+            printf "  • Consider creating PLAN.md before major work\n"
+        fi
+
+    fi
+
+    printf "\nEnvironment\n"
+
+    printf "  Host      %s\n" "$HOST_NAME"
+
+    if $TMUX_RUNNING; then
+        printf "  tmux      Yes\n"
+    else
+        printf "  tmux      No\n"
+    fi
+
+    printf "\n"
+
+}
+
+###############################################################################
+# Main
+###############################################################################
+
+if $JSON_OUTPUT; then
+    render_json
 else
-    printf "  tmux      No\n"
+    render_human
 fi
