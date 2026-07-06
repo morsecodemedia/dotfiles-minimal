@@ -133,6 +133,16 @@ project_file_status() {
     fi
 }
 
+current_task() {
+
+    if has_file ".current-task"; then
+        printf "\nCurrent Task\n"
+        printf "────────────────────────\n"
+
+        printf "  %s\n" "$(cat "$ROOT/.current-task")"
+    fi
+}
+
 collect_repository
 collect_repository_sync
 collect_runtime
@@ -200,10 +210,10 @@ render_human() {
         fi
 
     else
-
         printf "  Not a Git repository\n"
-
     fi
+
+    current_task
 
     printf "\nRuntime\n"
 
