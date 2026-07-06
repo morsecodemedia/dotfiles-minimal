@@ -57,6 +57,24 @@ collect_repository() {
     detect_project_type
 }
 
+collect_repository_sync() {
+
+    AHEAD=0
+    BEHIND=0
+
+    if [[ -n "$ROOT" ]]; then
+
+        if git rev-parse "@{upstream}" >/dev/null 2>&1; then
+
+            read -r AHEAD BEHIND < <(
+                git rev-list --left-right --count HEAD...@{upstream}
+            )
+
+        fi
+
+    fi
+}
+
 collect_runtime() {
 
     if command -v node >/dev/null 2>&1; then
@@ -116,6 +134,7 @@ project_file_status() {
 }
 
 collect_repository
+collect_repository_sync
 collect_runtime
 
 ###############################################################################
@@ -173,6 +192,12 @@ render_human() {
         fi
 
         printf "  Changed   %s\n" "$CHANGED_FILES"
+        
+        if (( AHEAD > 0 || BEHIND > 0 )); then
+          printf "  Sync      ↑ %d  ↓ %d\n" "$AHEAD" "$BEHIND"
+        else
+          printf "  Sync      ✓ Up to date\n"
+        fi
 
     else
 
