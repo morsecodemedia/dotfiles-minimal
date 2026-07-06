@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+REQUEST="${*:-}"
+
+printf "\n"
+printf "Engineering Planning Session\n"
+printf "============================\n"
+
+printf "\nContext\n"
+printf "────────────────────────\n"
+
+ctx
+
+printf "\nRepository Review\n"
+printf "────────────────────────\n"
+
+review
+
+printf "\nRequest\n"
+printf "────────────────────────\n"
+
+if [[ -n "$REQUEST" ]]; then
+    printf "%s\n" "$REQUEST"
+else
+    printf "No request supplied.\n"
+fi
+
+printf "\n"
+printf "Ready for AI planning.\n"
