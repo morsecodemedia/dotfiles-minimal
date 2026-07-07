@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+###############################################################################
+# Bootstrap
+###############################################################################
+
+SCRIPT_DIR="$(
+    cd "$(dirname "${BASH_SOURCE[0]}")" && pwd
+)"
+
+WORKSTATION_ROOT="$(
+    cd "$SCRIPT_DIR/.." && pwd
+)"
+
+# shellcheck source=../lib/workstation.sh
+source "$WORKSTATION_ROOT/lib/workstation.sh"
+
+eval "$(ctx --env)"
+
+require_git
+
+###############################################################################
+# Main
+###############################################################################
+
+main() {
+
+    heading "Engineering Brief"
+
+    section "Objective"
+
+    if [[ $# -gt 0 ]]; then
+        printf "%s\n" "$*"
+    else
+        printf "No engineering request supplied.\n"
+    fi
+
+    section "Repository"
+
+    printf "Project     %s\n" "$CTX_PROJECT_TYPE"
+    printf "Branch      %s\n" "$CTX_BRANCH"
+
+    if [[ "$CTX_DIRTY" == "true" ]]; then
+        printf "Status      Dirty\n"
+    else
+        printf "Status      Clean\n"
+    fi
+
+    printf "Changed     %s\n" "$CTX_CHANGED"
+
+    section "Current Focus"
+
+    if command -v todo >/dev/null 2>&1; then
+        if todo current >/dev/null 2>&1; then
+            todo current
+        else
+            printf "No active task.\n"
+        fi
+    else
+        printf "Todo provider unavailable.\n"
+    fi
+
+    section "Next"
+
+    printf "Review repository context.\n"
+    printf "Identify risks.\n"
+    printf "Develop implementation plan.\n"
+}
+
+main "$@"
