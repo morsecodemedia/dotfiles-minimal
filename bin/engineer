@@ -22,23 +22,73 @@ eval "$(ctx --env)"
 require_git
 
 ###############################################################################
-# Main
+# State
 ###############################################################################
 
-main() {
+OBJECTIVE="${*:-No engineering request supplied.}"
+CURRENT_FOCUS="No active task."
+
+###############################################################################
+# Collection
+###############################################################################
+
+collect_focus() {
+
+    if ! command -v todo >/dev/null 2>&1; then
+        CURRENT_FOCUS="Todo provider unavailable."
+        return
+    fi
+
+    if CURRENT_FOCUS_RAW="$(todo current 2>/dev/null)"; then
+        CURRENT_FOCUS="$CURRENT_FOCUS_RAW"
+    fi
+}
+
+###############################################################################
+# Artifacts
+###############################################################################
+
+write_brief() {
+
+    mkdir -p "$CTX_ROOT/.nextgen"
+
+    cat > "$CTX_ROOT/.nextgen/brief.md" <<EOF
+# Engineering Brief
+
+## Objective
+
+$OBJECTIVE
+
+## Repository
+
+- Project: $CTX_PROJECT_TYPE
+- Branch: $CTX_BRANCH
+- Status: $( [[ "$CTX_DIRTY" == "true" ]] && echo "Dirty" || echo "Clean" )
+- Changed Files: $CTX_CHANGED
+
+## Current Focus
+
+$CURRENT_FOCUS
+
+## Requested Outcome
+
+Develop an implementation plan before writing code.
+
+EOF
+}
+
+###############################################################################
+# Rendering
+###############################################################################
+
+render_brief() {
 
     heading "Engineering Brief"
 
     section "Objective"
-
-    if [[ $# -gt 0 ]]; then
-        printf "%s\n" "$*"
-    else
-        printf "No engineering request supplied.\n"
-    fi
+    printf "%s\n" "$OBJECTIVE"
 
     section "Repository"
-
     printf "Project     %s\n" "$CTX_PROJECT_TYPE"
     printf "Branch      %s\n" "$CTX_BRANCH"
 
@@ -51,22 +101,28 @@ main() {
     printf "Changed     %s\n" "$CTX_CHANGED"
 
     section "Current Focus"
+    printf "%s\n" "$CURRENT_FOCUS"
 
-    if command -v todo >/dev/null 2>&1; then
-        if todo current >/dev/null 2>&1; then
-            todo current
-        else
-            printf "No active task.\n"
-        fi
-    else
-        printf "Todo provider unavailable.\n"
-    fi
+    section "Artifact"
+    printf ".nextgen/brief.md\n"
 
     section "Next"
-
     printf "Review repository context.\n"
-    printf "Identify risks.\n"
+    printf "Identify implementation risks.\n"
     printf "Develop implementation plan.\n"
+}
+
+###############################################################################
+# Main
+###############################################################################
+
+main() {
+
+    collect_focus
+
+    write_brief
+
+    render_brief
 }
 
 main "$@"
