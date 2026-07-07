@@ -2,6 +2,27 @@
 
 set -euo pipefail
 
+###############################################################################
+# Formatting
+###############################################################################
+
+heading() {
+
+    printf "\n%s\n" "$1"
+
+    printf "%*s\n" "${#1}" "" | tr ' ' '='
+}
+
+section() {
+
+    printf "\n%s\n" "$1"
+    printf "────────────────────────\n"
+}
+
+###############################################################################
+# Output Mode
+###############################################################################
+
 OUTPUT_MODE="human"
 
 case "${1:-}" in
@@ -18,15 +39,22 @@ esac
 ###############################################################################
 
 ROOT=""
+PROJECT_NAME=""
+PROJECT_TYPE="Unknown"
+PROJECT_PROFILE="generic"
+PROJECT_FRAMEWORK=""
+
 BRANCH=""
 DIRTY=false
 CHANGED_FILES=0
+AHEAD=0
+BEHIND=0
 
-PROJECT_TYPE="Unknown"
-PROJECT_FRAMEWORK=""
+CURRENT_FOCUS=""
 
 NODE_VERSION=""
 NPM_VERSION=""
+
 SHELL_NAME="${SHELL##*/}"
 HOST_NAME="$(hostname)"
 TMUX_RUNNING=false
@@ -44,33 +72,35 @@ collect_repository() {
     fi
 
     ROOT="$(git rev-parse --show-toplevel)"
+
+    PROJECT_NAME="$(basename "$ROOT")"
+
     BRANCH="$(git branch --show-current)"
 
     if ! git diff --quiet || ! git diff --cached --quiet; then
         DIRTY=true
     fi
 
-    CHANGED_FILES=$(
-        git status --porcelain 2>/dev/null | wc -l | tr -d ' '
-    )
+    CHANGED_FILES="$(
+        git status --porcelain |
+        wc -l |
+        tr -d ' '
+    )"
 
     detect_project
+    collect_repository_sync
 }
 
 collect_repository_sync() {
 
-    AHEAD=0
-    BEHIND=0
+    if git rev-parse "@{upstream}" >/dev/null 2>&1; then
 
-    if [[ -n "$ROOT" ]]; then
-
-        if git rev-parse "@{upstream}" >/dev/null 2>&1; then
-
-            read -r AHEAD BEHIND < <(
-                git rev-list --left-right --count "HEAD...@{upstream}"
-            )
-
-        fi
+        read -r AHEAD BEHIND < <(
+            git rev-list \
+                --left-right \
+                --count \
+                "HEAD...@{upstream}"
+        )
 
     fi
 }
@@ -86,13 +116,25 @@ collect_runtime() {
     fi
 }
 
+collect_current_focus() {
+
+    CURRENT_FOCUS="No active task."
+
+    if ! command -v todo >/dev/null 2>&1; then
+        CURRENT_FOCUS="Todo provider unavailable."
+        return
+    fi
+
+    if focus="$(todo current 2>/dev/null)"; then
+        CURRENT_FOCUS="$focus"
+    fi
+}
+
 detect_project() {
 
-    PROJECT_NAME="$(basename "$ROOT")"
-
     PROJECT_TYPE="Unknown"
-    PROJECT_FRAMEWORK=""
     PROJECT_PROFILE="generic"
+    PROJECT_FRAMEWORK=""
 
     if [[ -f "$ROOT/package.json" ]]; then
 
@@ -117,8 +159,14 @@ detect_project() {
 
         PROJECT_TYPE="Shell Configuration"
         PROJECT_PROFILE="shell-configuration"
-
     fi
+}
+
+collect() {
+
+    collect_repository
+    collect_runtime
+    collect_current_focus
 }
 
 ###############################################################################
@@ -126,6 +174,7 @@ detect_project() {
 ###############################################################################
 
 has_file() {
+
     [[ -f "$ROOT/$1" ]]
 }
 
@@ -135,41 +184,64 @@ project_file_status() {
     local file="$2"
 
     if has_file "$file"; then
-        printf "  ✓ %-12s %s\n" "$label" "$file"
+        printf "  ✓ %-14s %s\n" "$label" "$file"
     else
-        printf "  ✗ %-12s %s\n" "$label" "$file"
+        printf "  ✗ %-14s %s\n" "$label" "$file"
     fi
 }
 
-current_focus() {
+ENGINEERING_WARNINGS=()
+ENGINEERING_RECOMMENDATIONS=()
 
-    printf "\nCurrent Focus\n"
-    printf "────────────────────────\n"
+evaluate_health() {
 
-    if ! command -v todo >/dev/null 2>&1; then
-        printf "  Todo provider unavailable.\n"
-        return
+    ENGINEERING_WARNINGS=()
+    ENGINEERING_RECOMMENDATIONS=()
+
+    if $DIRTY; then
+
+        ENGINEERING_WARNINGS+=(
+            "Repository has uncommitted changes."
+        )
+
+        ENGINEERING_RECOMMENDATIONS+=(
+            "Review changes with: git diff."
+        )
+
     fi
 
-    if CURRENT_FOCUS="$(todo current 2>/dev/null)"; then
-        printf "  %s\n" "$CURRENT_FOCUS"
-    else
-        printf "  No active task.\n"
+    case "$PROJECT_PROFILE" in
+
+        node|vite)
+
+            if ! has_file ".nvmrc"; then
+
+                ENGINEERING_WARNINGS+=(
+                    "Node project has no .nvmrc."
+                )
+
+            fi
+            ;;
+
+    esac
+
+    if ! has_file "PLAN.md"; then
+
+        ENGINEERING_WARNINGS+=(
+            "Missing PLAN.md."
+        )
+
+        ENGINEERING_RECOMMENDATIONS+=(
+            "Capture implementation strategy in PLAN.md."
+        )
+
     fi
 }
 
-working_memory() {
-    if has_file ".working-memory.md"; then
-        printf "\nEngineering Memory\n"
-        printf "────────────────────────\n"
+evaluate() {
 
-         printf "  Available\n"
-    fi
+    evaluate_health
 }
-
-collect_repository
-collect_repository_sync
-collect_runtime
 
 ###############################################################################
 # Rendering
@@ -180,19 +252,24 @@ render_json() {
 cat <<EOF
 {
   "repository": {
-    "root": "$ROOT",
-    "branch": "$BRANCH",
-    "dirty": $DIRTY,
-    "changed": $CHANGED_FILES,
     "name": "$PROJECT_NAME",
     "type": "$PROJECT_TYPE",
     "profile": "$PROJECT_PROFILE",
-    "framework": "$PROJECT_FRAMEWORK"
+    "framework": "$PROJECT_FRAMEWORK",
+    "root": "$ROOT",
+    "branch": "$BRANCH",
+    "status": $DIRTY,
+    "changed": $CHANGED_FILES,
+    "ahead": $AHEAD,
+    "behind": $BEHIND
   },
   "runtime": {
     "shell": "$SHELL_NAME",
     "node": "$NODE_VERSION",
     "npm": "$NPM_VERSION"
+  },
+  "engineering": {
+    "current_focus": "$CURRENT_FOCUS"
   },
   "environment": {
     "host": "$HOST_NAME",
@@ -203,49 +280,72 @@ EOF
 
 }
 
-render_human() {
+render_env() {
 
-    printf "\n"
-    printf "NextGen Workstation Context\n"
-    printf "===========================\n"
+cat <<EOF
+CTX_ROOT='$ROOT'
+CTX_PROJECT_NAME='$PROJECT_NAME'
+CTX_PROJECT_TYPE='$PROJECT_TYPE'
+CTX_PROJECT_PROFILE='$PROJECT_PROFILE'
+CTX_PROJECT_FRAMEWORK='$PROJECT_FRAMEWORK'
 
-    printf "\nRepository\n"
+CTX_BRANCH='$BRANCH'
+CTX_STATUS='$DIRTY'
+CTX_CHANGED='$CHANGED_FILES'
+CTX_AHEAD='$AHEAD'
+CTX_BEHIND='$BEHIND'
 
-    if [[ -n "$ROOT" ]]; then
+CTX_CURRENT_FOCUS='$CURRENT_FOCUS'
 
-      printf "  Name      %s\n" "$PROJECT_NAME"
-      printf "  Type      %s\n" "$PROJECT_TYPE"
-      printf "  Profile   %s\n" "$PROJECT_PROFILE"
-      printf "  Root      %s\n" "$ROOT"
-      printf "  Branch    %s\n" "$BRANCH"
+CTX_NODE='$NODE_VERSION'
+CTX_NPM='$NPM_VERSION'
+CTX_SHELL='$SHELL_NAME'
 
-        if [[ -n "$PROJECT_FRAMEWORK" ]]; then
-            printf "  Framework %s\n" "$PROJECT_FRAMEWORK"
-        fi
+CTX_HOST='$HOST_NAME'
+CTX_TMUX='$TMUX_RUNNING'
+EOF
 
-        if $DIRTY; then
-            printf "  Dirty     Yes\n"
-        else
-            printf "  Dirty     No\n"
-        fi
+}
 
-        printf "  Changed   %s\n" "$CHANGED_FILES"
+render_repository() {
 
-        if (( AHEAD > 0 || BEHIND > 0 )); then
-          printf "  Sync      ↑ %d  ↓ %d\n" "$AHEAD" "$BEHIND"
-        else
-          printf "  Sync      ✓ Up to date\n"
-        fi
+    section "Repository"
 
-    else
-        printf "  Not a Git repository\n"
+    printf "  Name      %s\n" "$PROJECT_NAME"
+    printf "  Type      %s\n" "$PROJECT_TYPE"
+    printf "  Profile   %s\n" "$PROJECT_PROFILE"
+    printf "  Root      %s\n" "$ROOT"
+    printf "  Branch    %s\n" "$BRANCH"
+
+    if [[ -n "$PROJECT_FRAMEWORK" ]]; then
+        printf "  Framework %s\n" "$PROJECT_FRAMEWORK"
     fi
 
-    current_focus
+    if $DIRTY; then
+        printf "  Status    Dirty\n"
+    else
+        printf "  Status    Clean\n"
+    fi
 
-    working_memory
+    printf "  Modified   %s\n" "$CHANGED_FILES"
 
-    printf "\nRuntime\n"
+    if (( AHEAD > 0 || BEHIND > 0 )); then
+        printf "  Sync      ↑ %d  ↓ %d\n" "$AHEAD" "$BEHIND"
+    else
+        printf "  Sync      ✓ Up to date\n"
+    fi
+}
+
+render_focus() {
+
+    section "Current Focus"
+
+    printf "  %s\n" "$CURRENT_FOCUS"
+}
+
+render_runtime() {
+
+    section "Runtime"
 
     printf "  Shell     %s\n" "$SHELL_NAME"
 
@@ -254,53 +354,64 @@ render_human() {
 
     [[ -n "$NPM_VERSION" ]] &&
         printf "  npm       %s\n" "$NPM_VERSION"
+}
 
-    if [[ -n "$ROOT" ]]; then
+render_project_files() {
 
-        printf "\nProject Files\n"
+    section "Repository Artifacts"
 
-        project_file_status "README" "README.md"
-        project_file_status "Plan" "PLAN.md"
-        project_file_status "Roadmap" "ROADMAP.md"
-        project_file_status "Architecture" "ARCHITECTURE.md"
-        project_file_status "AI" "AI_SUBSYSTEM.md"
-        project_file_status "Git Ignore" ".gitignore"
-        project_file_status "EditorConfig" ".editorconfig"
+    project_file_status "README" "README.md"
+    project_file_status "Plan" "PLAN.md"
+    project_file_status "Roadmap" "ROADMAP.md"
+    project_file_status "Architecture" "ARCHITECTURE.md"
+    project_file_status "AI" "AI_SUBSYSTEM.md"
+    project_file_status "Git Ignore" ".gitignore"
+    project_file_status "Editor Config" ".editorconfig"
 
-        if [[ "$PROJECT_TYPE" == "Node" || "$PROJECT_TYPE" == "Vite" ]]; then
-            project_file_status "Package" "package.json"
-            project_file_status "NVM" ".nvmrc"
-        fi
+    if [[ "$PROJECT_PROFILE" == "node" ]] ||
+       [[ "$PROJECT_PROFILE" == "vite" ]]; then
 
-        printf "\nEngineering Health\n"
-
-        if $DIRTY; then
-            printf "  ⚠ Repository has uncommitted changes\n"
-        fi
-
-        if ! has_file "PLAN.md"; then
-            printf "  ⚠ PLAN.md is missing\n"
-        fi
-
-        if [[ "$PROJECT_TYPE" == "Node" || "$PROJECT_TYPE" == "Vite" ]]; then
-            if ! has_file ".nvmrc"; then
-                printf "  ⚠ Node project has no .nvmrc\n"
-            fi
-        fi
-
-        printf "\nNext Steps\n"
-
-        if $DIRTY; then
-            printf "  • Review changes with: git diff\n"
-        fi
-
-        if ! has_file "PLAN.md"; then
-            printf "  • Consider creating PLAN.md before major work\n"
-        fi
+        project_file_status "Package" "package.json"
+        project_file_status "NVM" ".nvmrc"
 
     fi
+}
 
-    printf "\nEnvironment\n"
+render_health() {
+
+    section "Engineering Health"
+
+    if ((${#ENGINEERING_WARNINGS[@]} == 0)); then
+        printf "  ✓ No issues detected.\n"
+        return
+    fi
+
+    local warning
+
+    for warning in "${ENGINEERING_WARNINGS[@]}"; do
+        printf "  ⚠ %s\n" "$warning"
+    done
+}
+
+render_recommendations() {
+
+    section "Next Steps"
+
+    if ((${#ENGINEERING_RECOMMENDATIONS[@]} == 0)); then
+        printf "  ✓ Continue current work.\n"
+        return
+    fi
+
+    local recommendation
+
+    for recommendation in "${ENGINEERING_RECOMMENDATIONS[@]}"; do
+        printf "  • %s\n" "$recommendation"
+    done
+}
+
+render_environment() {
+
+    section "Environment"
 
     printf "  Host      %s\n" "$HOST_NAME"
 
@@ -309,46 +420,55 @@ render_human() {
     else
         printf "  tmux      No\n"
     fi
+}
+
+render_human() {
+
+    heading "NextGen Workstation Context"
+
+    if [[ -z "$ROOT" ]]; then
+        printf "\nNot inside a Git repository.\n\n"
+        return
+    fi
+
+    render_repository
+    render_focus
+    render_runtime
+    render_project_files
+    render_health
+    render_recommendations
+    render_environment
 
     printf "\n"
-
 }
 
-render_env() {
-
-cat <<EOF
-CTX_ROOT='$ROOT'
-CTX_BRANCH='$BRANCH'
-CTX_DIRTY='$DIRTY'
-CTX_CHANGED='$CHANGED_FILES'
-CTX_PROJECT_NAME='$PROJECT_NAME'
-CTX_PROJECT_PROFILE='$PROJECT_PROFILE'
-CTX_PROJECT_TYPE='$PROJECT_TYPE'
-CTX_PROJECT_FRAMEWORK='$PROJECT_FRAMEWORK'
-CTX_NODE='$NODE_VERSION'
-CTX_NPM='$NPM_VERSION'
-CTX_SHELL='$SHELL_NAME'
-CTX_HOST='$HOST_NAME'
-CTX_TMUX='$TMUX_RUNNING'
-EOF
-
-}
 ###############################################################################
 # Main
 ###############################################################################
 
-case "$OUTPUT_MODE" in
+main() {
 
-    json)
-        render_json
-        ;;
+    collect
 
-    env)
-        render_env
-        ;;
+    evaluate
 
-    *)
-        render_human
-        ;;
+    case "$OUTPUT_MODE" in
 
-esac
+        json)
+            render_json
+            ;;
+
+        env)
+            render_env
+            ;;
+
+        *)
+            render_human
+            ;;
+
+    esac
+}
+
+main "$@"
+
+
