@@ -46,7 +46,18 @@ PROJECT_FRAMEWORK=""
 
 BRANCH=""
 DIRTY=false
+
+WORKTREE_STATUS="Clean"
+
+MODIFIED_COUNT=0
+UNTRACKED_COUNT=0
+STAGED_COUNT=0
+
+# Aggregate change count retained for API compatibility.
 CHANGED_FILES=0
+
+TRACKING_BRANCH="None"
+
 AHEAD=0
 BEHIND=0
 
@@ -72,20 +83,45 @@ collect_repository() {
     fi
 
     ROOT="$(git rev-parse --show-toplevel)"
-
     PROJECT_NAME="$(basename "$ROOT")"
 
     BRANCH="$(git branch --show-current)"
 
-    if ! git diff --quiet || ! git diff --cached --quiet; then
-        DIRTY=true
-    fi
+    WORKTREE_STATUS="Clean"
+    DIRTY=false
 
-    CHANGED_FILES="$(
-        git status --porcelain |
-        wc -l |
-        tr -d ' '
-    )"
+    MODIFIED_COUNT=0
+    UNTRACKED_COUNT=0
+    STAGED_COUNT=0
+
+    while IFS= read -r line; do
+
+        [[ -z "$line" ]] && continue
+
+        DIRTY=true
+        WORKTREE_STATUS="Modified"
+
+        index="${line:0:1}"
+        worktree="${line:1:1}"
+
+        # Staged
+        if [[ "$index" != " " && "$index" != "?" ]]; then
+            ((STAGED_COUNT++))
+        fi
+
+        # Modified
+        if [[ "$worktree" == "M" ]]; then
+            ((MODIFIED_COUNT++))
+        fi
+
+        # Untracked
+        if [[ "$index$worktree" == "??" ]]; then
+            ((UNTRACKED_COUNT++))
+        fi
+
+    done < <(git status --porcelain)
+
+    CHANGED_FILES=$((MODIFIED_COUNT + UNTRACKED_COUNT + STAGED_COUNT))
 
     detect_project
     collect_repository_sync
@@ -93,7 +129,16 @@ collect_repository() {
 
 collect_repository_sync() {
 
-    if git rev-parse "@{upstream}" >/dev/null 2>&1; then
+    TRACKING_BRANCH="None"
+
+    AHEAD=0
+    BEHIND=0
+
+    if git rev-parse --abbrev-ref "@{upstream}" >/dev/null 2>&1; then
+
+        TRACKING_BRANCH="$(
+            git rev-parse --abbrev-ref "@{upstream}"
+        )"
 
         read -r AHEAD BEHIND < <(
             git rev-list \
@@ -198,7 +243,7 @@ evaluate_health() {
     ENGINEERING_WARNINGS=()
     ENGINEERING_RECOMMENDATIONS=()
 
-    if $DIRTY; then
+if [[ "$WORKTREE_STATUS" == "Modified" ]]; then
 
         ENGINEERING_WARNINGS+=(
             "Repository has uncommitted changes."
@@ -256,10 +301,20 @@ cat <<EOF
     "type": "$PROJECT_TYPE",
     "profile": "$PROJECT_PROFILE",
     "framework": "$PROJECT_FRAMEWORK",
+
     "root": "$ROOT",
     "branch": "$BRANCH",
-    "status": $DIRTY,
+
+    "working_tree": "$WORKTREE_STATUS",
+
+    "modified": $MODIFIED_COUNT,
+    "untracked": $UNTRACKED_COUNT,
+    "staged": $STAGED_COUNT,
+
     "changed": $CHANGED_FILES,
+
+    "tracking": "$TRACKING_BRANCH",
+
     "ahead": $AHEAD,
     "behind": $BEHIND
   },
@@ -269,7 +324,9 @@ cat <<EOF
     "npm": "$NPM_VERSION"
   },
   "engineering": {
-    "current_focus": "$CURRENT_FOCUS"
+    "current_focus": "$CURRENT_FOCUS",
+    "health": [],
+    "recommendations": []
   },
   "environment": {
     "host": "$HOST_NAME",
@@ -284,14 +341,24 @@ render_env() {
 
 cat <<EOF
 CTX_ROOT='$ROOT'
+
 CTX_PROJECT_NAME='$PROJECT_NAME'
 CTX_PROJECT_TYPE='$PROJECT_TYPE'
 CTX_PROJECT_PROFILE='$PROJECT_PROFILE'
 CTX_PROJECT_FRAMEWORK='$PROJECT_FRAMEWORK'
 
 CTX_BRANCH='$BRANCH'
-CTX_STATUS='$DIRTY'
+
+CTX_WORKING_TREE='$WORKTREE_STATUS'
+
+CTX_MODIFIED='$MODIFIED_COUNT'
+CTX_UNTRACKED='$UNTRACKED_COUNT'
+CTX_STAGED='$STAGED_COUNT'
+
+# Backwards compatibility.
 CTX_CHANGED='$CHANGED_FILES'
+
+CTX_TRACKING_BRANCH='$TRACKING_BRANCH'
 CTX_AHEAD='$AHEAD'
 CTX_BEHIND='$BEHIND'
 
@@ -311,28 +378,36 @@ render_repository() {
 
     section "Repository"
 
-    printf "  Name      %s\n" "$PROJECT_NAME"
-    printf "  Type      %s\n" "$PROJECT_TYPE"
-    printf "  Profile   %s\n" "$PROJECT_PROFILE"
-    printf "  Root      %s\n" "$ROOT"
-    printf "  Branch    %s\n" "$BRANCH"
+    printf "  Name          %s\n" "$PROJECT_NAME"
+    printf "  Type          %s\n" "$PROJECT_TYPE"
+    printf "  Profile       %s\n" "$PROJECT_PROFILE"
+    printf "  Root          %s\n" "$ROOT"
+    printf "  Branch        %s\n" "$BRANCH"
 
     if [[ -n "$PROJECT_FRAMEWORK" ]]; then
-        printf "  Framework %s\n" "$PROJECT_FRAMEWORK"
+        printf "  Framework     %s\n" "$PROJECT_FRAMEWORK"
     fi
 
-    if $DIRTY; then
-        printf "  Status    Dirty\n"
-    else
-        printf "  Status    Clean\n"
-    fi
+    printf "  Working Tree  %s\n" "$WORKTREE_STATUS"
 
-    printf "  Modified   %s\n" "$CHANGED_FILES"
+    printf "  Modified      %d\n" "$MODIFIED_COUNT"
+    printf "  Untracked     %d\n" "$UNTRACKED_COUNT"
+    printf "  Staged        %d\n" "$STAGED_COUNT"
 
-    if (( AHEAD > 0 || BEHIND > 0 )); then
-        printf "  Sync      ↑ %d  ↓ %d\n" "$AHEAD" "$BEHIND"
+    if [[ "$TRACKING_BRANCH" == "None" ]]; then
+
+        printf "  Tracking      None\n"
+
     else
-        printf "  Sync      ✓ Up to date\n"
+
+        printf "  Tracking      %s\n" "$TRACKING_BRANCH"
+
+        if ((AHEAD == 0 && BEHIND == 0)); then
+            printf "  Commits       Current\n"
+        else
+            printf "  Commits       ↑ %d  ↓ %d\n" "$AHEAD" "$BEHIND"
+        fi
+
     fi
 }
 
