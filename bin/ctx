@@ -54,7 +54,7 @@ collect_repository() {
         git status --porcelain 2>/dev/null | wc -l | tr -d ' '
     )
 
-    detect_project_type
+    detect_project
 }
 
 collect_repository_sync() {
@@ -67,7 +67,7 @@ collect_repository_sync() {
         if git rev-parse "@{upstream}" >/dev/null 2>&1; then
 
             read -r AHEAD BEHIND < <(
-                git rev-list --left-right --count HEAD...@{upstream}
+                git rev-list --left-right --count "HEAD...@{upstream}"
             )
 
         fi
@@ -86,20 +86,27 @@ collect_runtime() {
     fi
 }
 
-detect_project_type() {
+detect_project() {
+
+    PROJECT_NAME="$(basename "$ROOT")"
 
     PROJECT_TYPE="Unknown"
     PROJECT_FRAMEWORK=""
+    PROJECT_PROFILE="generic"
 
     if [[ -f "$ROOT/package.json" ]]; then
-        PROJECT_TYPE="Node"
+
+        PROJECT_TYPE="Node Application"
+        PROJECT_PROFILE="node"
 
         if [[ -f "$ROOT/vite.config.js" ]] ||
            [[ -f "$ROOT/vite.config.mjs" ]] ||
            [[ -f "$ROOT/vite.config.ts" ]]; then
 
-            PROJECT_TYPE="Vite"
+            PROJECT_TYPE="Vite Application"
+            PROJECT_PROFILE="vite"
             PROJECT_FRAMEWORK="Vite"
+
         fi
 
         return
@@ -109,7 +116,8 @@ detect_project_type() {
        [[ -d "$ROOT/.profile.d" ]]; then
 
         PROJECT_TYPE="Shell Configuration"
-        return
+        PROJECT_PROFILE="shell-configuration"
+
     fi
 }
 
@@ -169,7 +177,9 @@ cat <<EOF
     "branch": "$BRANCH",
     "dirty": $DIRTY,
     "changed": $CHANGED_FILES,
+    "name": "$PROJECT_NAME",
     "type": "$PROJECT_TYPE",
+    "profile": "$PROJECT_PROFILE",
     "framework": "$PROJECT_FRAMEWORK"
   },
   "runtime": {
@@ -196,9 +206,11 @@ render_human() {
 
     if [[ -n "$ROOT" ]]; then
 
-        printf "  Root      %s\n" "$ROOT"
-        printf "  Branch    %s\n" "$BRANCH"
-        printf "  Type      %s\n" "$PROJECT_TYPE"
+      printf "  Name      %s\n" "$PROJECT_NAME"
+      printf "  Type      %s\n" "$PROJECT_TYPE"
+      printf "  Profile   %s\n" "$PROJECT_PROFILE"
+      printf "  Root      %s\n" "$ROOT"
+      printf "  Branch    %s\n" "$BRANCH"
 
         if [[ -n "$PROJECT_FRAMEWORK" ]]; then
             printf "  Framework %s\n" "$PROJECT_FRAMEWORK"
@@ -302,6 +314,8 @@ CTX_ROOT='$ROOT'
 CTX_BRANCH='$BRANCH'
 CTX_DIRTY='$DIRTY'
 CTX_CHANGED='$CHANGED_FILES'
+CTX_PROJECT_NAME='$PROJECT_NAME'
+CTX_PROJECT_PROFILE='$PROJECT_PROFILE'
 CTX_PROJECT_TYPE='$PROJECT_TYPE'
 CTX_PROJECT_FRAMEWORK='$PROJECT_FRAMEWORK'
 CTX_NODE='$NODE_VERSION'
