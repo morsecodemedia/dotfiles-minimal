@@ -2,14 +2,14 @@
 
 ## Objective
 
-Implement provider architecture
+Rewrite ctx
 
 ## Repository
 
 - Project: Shell Configuration
 - Branch: feature/nextgen-workstation
 - Status: Dirty
-- Changed Files: 1
+- Changed Files: 3
 
 ## Current Focus
 

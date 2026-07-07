@@ -25,7 +25,29 @@ require_git
 # State
 ###############################################################################
 
-OBJECTIVE="${*:-No engineering request supplied.}"
+if [[ $# -gt 0 ]]; then
+
+    OBJECTIVE="$*"
+
+elif command -v todo >/dev/null 2>&1; then
+
+    if CURRENT="$(todo current 2>/dev/null)"; then
+        OBJECTIVE="$CURRENT"
+    else
+
+        printf "Objective: "
+
+        read -r OBJECTIVE
+
+    fi
+
+else
+
+    printf "Objective: "
+
+    read -r OBJECTIVE
+
+fi
 CURRENT_FOCUS="No active task."
 
 ###############################################################################
@@ -77,6 +99,71 @@ Develop an implementation plan before writing code.
 EOF
 }
 
+write_session() {
+
+    cat > "$CTX_ROOT/.nextgen/session.md" <<EOF
+# Engineering Session
+
+## Started
+
+$(date +"%Y-%m-%d %H:%M:%S")
+
+## Objective
+
+$OBJECTIVE
+
+## Repository
+
+- Project: $CTX_PROJECT_TYPE
+- Branch: $CTX_BRANCH
+
+## Current Focus
+
+$CURRENT_FOCUS
+
+---
+
+# Investigation
+
+## Findings
+
+-
+
+## Questions
+
+-
+
+## Risks
+
+-
+
+---
+
+# Plan
+
+-
+
+---
+
+# Decisions
+
+-
+
+---
+
+# Implementation Notes
+
+-
+
+---
+
+# Follow-up
+
+-
+
+EOF
+}
+
 ###############################################################################
 # Rendering
 ###############################################################################
@@ -103,8 +190,10 @@ render_brief() {
     section "Current Focus"
     printf "%s\n" "$CURRENT_FOCUS"
 
-    section "Artifact"
-    printf ".nextgen/brief.md\n"
+    section "Artifacts"
+
+    printf "Engineering Brief     .nextgen/brief.md\n"
+    printf "Engineering Session   .nextgen/session.md\n"
 
     section "Next"
     printf "Review repository context.\n"
@@ -121,6 +210,7 @@ main() {
     collect_focus
 
     write_brief
+    write_session
 
     render_brief
 }
