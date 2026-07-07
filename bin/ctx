@@ -143,6 +143,15 @@ current_task() {
     fi
 }
 
+working_memory() {
+    if has_file ".working-memory.md"; then
+        printf "\nEngineering Memory\n"
+        printf "────────────────────────\n"
+
+         printf "  Available\n"
+    fi
+}
+
 collect_repository
 collect_repository_sync
 collect_runtime
@@ -202,7 +211,7 @@ render_human() {
         fi
 
         printf "  Changed   %s\n" "$CHANGED_FILES"
-        
+
         if (( AHEAD > 0 || BEHIND > 0 )); then
           printf "  Sync      ↑ %d  ↓ %d\n" "$AHEAD" "$BEHIND"
         else
@@ -214,6 +223,8 @@ render_human() {
     fi
 
     current_task
+
+    working_memory
 
     printf "\nRuntime\n"
 
