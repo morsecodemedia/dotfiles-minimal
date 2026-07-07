@@ -141,13 +141,20 @@ project_file_status() {
     fi
 }
 
-current_task() {
+current_focus() {
 
-    if has_file ".current-task"; then
-        printf "\nCurrent Task\n"
-        printf "────────────────────────\n"
+    printf "\nCurrent Focus\n"
+    printf "────────────────────────\n"
 
-        printf "  %s\n" "$(cat "$ROOT/.current-task")"
+    if ! command -v todo >/dev/null 2>&1; then
+        printf "  Todo provider unavailable.\n"
+        return
+    fi
+
+    if CURRENT_FOCUS="$(todo current 2>/dev/null)"; then
+        printf "  %s\n" "$CURRENT_FOCUS"
+    else
+        printf "  No active task.\n"
     fi
 }
 
@@ -234,7 +241,7 @@ render_human() {
         printf "  Not a Git repository\n"
     fi
 
-    current_task
+    current_focus
 
     working_memory
 
