@@ -4,24 +4,68 @@
 
 Transform repository state into engineering observations.
 
-## Responsibilities
+The review workflow consumes the Context Engine and repository changes to help engineers understand the impact of their work.
 
-- Consume the Context Engine.
+---
+
+# Responsibilities
+
+- Consume Context Engine.
 - Analyze repository changes.
-- Summarize engineering state.
-- Recommend next actions.
+- Classify engineering scope.
+- Produce engineering observations.
+- Recommend the next engineering action.
 
-## Non-Goals
+---
+
+# Non-Goals
+
+Review does not:
 
 - Replace Git.
 - Generate code.
 - Launch AI.
 - Modify repositories.
+- Make implementation decisions.
 
-## Definition of Done
+---
+
+# Human Output
+
+Engineering Review
+
+Summary
+
+Scope
+
+Files
+
+Diff Summary
+
+Engineering Observations
+
+Recommendations
+
+---
+
+# JSON Contract
+
+Summary
+
+Scope
+
+Files
+
+Observations
+
+Recommendations
+
+---
+
+# Definition of Done
 
 - Consume ctx only.
-- No duplicated repository collection.
+- No duplicated repository context.
 - Human output.
 - JSON output.
 - ShellCheck clean.

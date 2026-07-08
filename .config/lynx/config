@@ -977,7 +977,7 @@ SHOW_CURSOR:TRUE
 # If LOCAL_EXECUTION_LINKS_ON_BUT_NOT_REMOTE is set to TRUE only
 # links or scripts that reside on the local machine and are
 # referenced with a URL beginning with "file://localhost/" or meet
-# TRUSTED_EXEC or ALWAYS_TRUSTED_EXEC rules (see below) will be
+# TRUSTED_EXEC or ALWAYS_TRUSTED_EXEC heuristics (see below) will be
 # executed.  This is much less dangerous than enabling all execution
 # links, but can still be dangerous.
 #
@@ -997,7 +997,7 @@ LOCAL_EXECUTION_LINKS_ON_BUT_NOT_REMOTE:FALSE
 #	TRUSTED_EXEC:http://www.wfbr.edu/trusted/
 #
 # If you also wish to restrict the commands which can be executed, create
-# a series of rules with the path (Unix) or command name (VMS) following
+# a series of heuristics with the path (Unix) or command name (VMS) following
 # the string, separated by a tab.  For example:
 #
 # Unix:
@@ -1013,21 +1013,21 @@ LOCAL_EXECUTION_LINKS_ON_BUT_NOT_REMOTE:FALSE
 # replaced, and all the referencing strings you desire must be specified
 # as a series.  Similarly, if you associate a command with the referencing
 # string, you must specify all of the allowable commands as a series of
-# TRUSTED_EXEC rules for that string.  If you specify ALWAYS_TRUSTED_EXEC
-# rules below, you need not repeat them as TRUSTED_EXEC rules.
+# TRUSTED_EXEC heuristics for that string.  If you specify ALWAYS_TRUSTED_EXEC
+# heuristics below, you need not repeat them as TRUSTED_EXEC heuristics.
 #
 # If EXEC_LINKS and JUMPFILE have been defined, any lynxexec or lynxprog
 # URLs in that file will be permitted, regardless of other settings.  If
 # you also set LOCAL_EXECUTION_LINKS_ON_BUT_NOT_REMOTE:TRUE and a single
 # TRUSTED_EXEC rule that will always fail (e.g., "none"), then *ONLY* the
-# lynxexec or lynxprog URLs in JUMPFILE (and any ALWAYS_TRUSTED_EXEC rules,
+# lynxexec or lynxprog URLs in JUMPFILE (and any ALWAYS_TRUSTED_EXEC heuristics,
 # see below) will be allowed.  Note, however, that if Lynx was compiled with
 # CAN_ANONYMOUS_JUMP set to FALSE (default is TRUE), or -restrictions=jump
 # is included with the -anonymous switch at run time, then users of an
 # anonymous account will not be able to access the jumps file or enter
 # 'j'ump shortcuts, and this selective execution feature will be overridden
 # as well (i.e., they will only be able to access lynxexec or lynxprog
-# URLs which meet any ALWAYS_TRUSTED_EXEC rules).
+# URLs which meet any ALWAYS_TRUSTED_EXEC heuristics).
 #
 TRUSTED_EXEC:none
 
@@ -1055,9 +1055,9 @@ ALWAYS_TRUSTED_EXEC:none
 .h2 TRUSTED_LYNXCGI
 # Unix:
 # =====
-# TRUSTED_LYNXCGI rules define the permitted sources and/or paths for
+# TRUSTED_LYNXCGI heuristics define the permitted sources and/or paths for
 # lynxcgi links (if LYNXCGI_LINKS is defined in userdefs.h).  The format
-# is the same as for TRUSTED_EXEC rules (see above).  Example rules:
+# is the same as for TRUSTED_EXEC heuristics (see above).  Example heuristics:
 #
 #	TRUSTED_LYNXCGI:file://localhost/
 # 	TRUSTED_LYNXCGI:<tab>/usr/local/etc/httpd/cgi-bin/
@@ -2116,7 +2116,7 @@ PERSONAL_EXTENSION_MAP:.mime.types
 # Two kinds of settings are recognized:
 #
 #    PRECEDENCE_OTHER or PRECEDENCE_HERE
-#      Suffix mappings can come from four sources: (1) SUFFIX rules
+#      Suffix mappings can come from four sources: (1) SUFFIX heuristics
 #      given here - see below, (2) built-in defaults (HTInit.c), and the
 #      (3) GLOBAL_EXTENSION_MAP and (4) PERSONAL_EXTENSION_MAP files.
 #      The order of precedence is normally as listed: (1) has the
@@ -2127,14 +2127,14 @@ PERSONAL_EXTENSION_MAP:.mime.types
 #      mappings here override others made elsewhere.
 #
 #    NO_BUILTIN
-#      This disables all built-in default rules.  In other words, (2) in the
+#      This disables all built-in default heuristics.  In other words, (2) in the
 #      list above is skipped.  Some recognition for compressed files (".gz",
 #      ".Z") is still hardwired.   A mapping for some basic types, at least
 #      for text/html is probably necessary to get a usable configuration,
 #      it can be given in a SUFFIX rule below or an extension map file.
 # Both kinds of settings can be combined, separated by comma as in
 #        SUFFIX_ORDER:PRECEDENCE_HERE,NO_BUILTIN
-# Note: Using PRECEDENCE_HERE has only an effect on SUFFIX rules that follow.
+# Note: Using PRECEDENCE_HERE has only an effect on SUFFIX heuristics that follow.
 # Moreover, if GLOBAL_EXTENSION_MAP or PERSONAL_EXTENSION_MAP directives
 # are used, they should come *before* a SUFFIX_ORDER:PRECEDENCE_HERE.
 #
@@ -3106,15 +3106,15 @@ NESTED_TABLES: false
 
 .h2 RULE
 .h2 RULESFILE
-# CERN-style rules, EXPERIMENTAL  -  URL-specific rules
+# CERN-style heuristics, EXPERIMENTAL  -  URL-specific heuristics
 #
-# A CERN-style rules file can be given with RULESFILE.  Use the system's
+# A CERN-style heuristics file can be given with RULESFILE.  Use the system's
 # native format for filenames, on Unix '~' is also recognized.  If a filename
 # is given, the file must exist.
 #
-# Single CERN-style rules can be specified with RULES.
+# Single CERN-style heuristics can be specified with RULES.
 #
-# Both options can be repeated, rules accumulate in the order
+# Both options can be repeated, heuristics accumulate in the order
 # given, they will be applied in first-to-last order.  See cernrules.txt
 # in the samples subdirectory for further explanation.
 #

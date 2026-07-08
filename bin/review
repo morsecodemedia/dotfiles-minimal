@@ -6,8 +6,13 @@ set -euo pipefail
 # Bootstrap
 ###############################################################################
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-WORKSTATION_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+SCRIPT_DIR="$(
+    cd "$(dirname "${BASH_SOURCE[0]}")" && pwd
+)"
+
+WORKSTATION_ROOT="$(
+    cd "$SCRIPT_DIR/.." && pwd
+)"
 
 # shellcheck source-path=SCRIPTDIR/..
 # shellcheck source=lib/workstation.sh
@@ -18,103 +23,69 @@ eval "$(ctx --env)"
 require_git
 
 ###############################################################################
-# Review
+# State
 ###############################################################################
 
-collect_repository_state() {
+SUMMARY=()
 
-    DIRTY="No"
+IMPACTS=()
 
-    if [[ -n "$(git status --porcelain)" ]]; then
-        DIRTY="Yes"
-    fi
+FILES=()
+
+OBSERVATIONS=()
+
+RECOMMENDATIONS=()
+
+DIFF_STAT=""
+
+###############################################################################
+# Collection
+###############################################################################
+
+collect_summary() {
+
+    SUMMARY=()
+
+    SUMMARY+=("Working Tree: $CTX_WORKING_TREE")
+
+    SUMMARY+=(
+        "Modified: $CTX_MODIFIED"
+    )
+
+    SUMMARY+=(
+        "Untracked: $CTX_UNTRACKED"
+    )
+
+    SUMMARY+=(
+        "Staged: $CTX_STAGED"
+    )
 }
 
-collect_change_summary() {
+collect_files() {
 
-    ADDED=0
-    MODIFIED=0
-    DELETED=0
-    RENAMED=0
+    FILES=()
 
     while IFS= read -r line; do
 
-        status="${line:0:2}"
+        [[ -z "$line" ]] && continue
 
-        case "$status" in
-            "A "|"??")
-                ((ADDED++))
-                ;;
-            " M"|"M ")
-                ((MODIFIED++))
-                ;;
-            " D"|"D ")
-                ((DELETED++))
-                ;;
-            R*)
-                ((RENAMED++))
-                ;;
-        esac
+        FILES+=("$line")
 
-    done < <(git status --porcelain)
-
+    done < <(git status --short)
 }
 
-render_repository() {
+collect_diff() {
 
-    section "Repository"
-
-    printf "  Branch    %s\n" "$CTX_BRANCH"
-    printf "  Dirty     %s\n" "$DIRTY"
+    DIFF_STAT="$(git diff --stat)"
 }
 
-render_changes() {
+collect() {
 
-    section "Changes"
+    collect_summary
 
-    printf "  Added      %d\n" "$ADDED"
-    printf "  Modified   %d\n" "$MODIFIED"
-    printf "  Deleted    %d\n" "$DELETED"
-    printf "  Renamed    %d\n" "$RENAMED"
+    collect_files
+
+    collect_diff
 }
 
-render_files() {
 
-    section "Files"
-
-    git status --short
-}
-
-render_diff_summary() {
-
-    local diff_stat
-
-    diff_stat="$(git diff --stat)"
-
-    if [[ -n "$diff_stat" ]]; then
-
-        section "Diff Summary"
-
-        printf "%s\n" "$diff_stat"
-
-    fi
-}
-
-###############################################################################
-# Main
-###############################################################################
-
-main() {
-
-    heading "Engineering Situation Report"
-
-    collect_repository_state
-    collect_change_summary
-
-    render_repository
-    render_changes
-    render_files
-    render_diff_summary
-}
-
-main "$@"

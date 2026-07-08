@@ -45,7 +45,6 @@ PROJECT_PROFILE="generic"
 PROJECT_FRAMEWORK=""
 
 BRANCH=""
-DIRTY=false
 
 WORKTREE_STATUS="Clean"
 
@@ -88,7 +87,6 @@ collect_repository() {
     BRANCH="$(git branch --show-current)"
 
     WORKTREE_STATUS="Clean"
-    DIRTY=false
 
     MODIFIED_COUNT=0
     UNTRACKED_COUNT=0
@@ -98,7 +96,6 @@ collect_repository() {
 
         [[ -z "$line" ]] && continue
 
-        DIRTY=true
         WORKTREE_STATUS="Modified"
 
         index="${line:0:1}"

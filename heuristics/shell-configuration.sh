@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-rule_shell_configuration() {
+heuristic_shell_configuration() {
 
     if [[ "$CTX_PROJECT_TYPE" != "Shell Configuration" ]]; then
         return
