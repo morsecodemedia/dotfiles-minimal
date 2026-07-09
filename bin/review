@@ -18,6 +18,12 @@ WORKSTATION_ROOT="$(
 # shellcheck source=lib/workstation.sh
 source "$WORKSTATION_ROOT/lib/workstation.sh"
 
+# shellcheck source=lib/knowledge.sh
+source "$WORKSTATION_ROOT/lib/knowledge.sh"
+
+# shellcheck source=lib/matcher.sh
+source "$WORKSTATION_ROOT/lib/matcher.sh"
+
 eval "$(ctx --env)"
 
 require_git
@@ -28,13 +34,14 @@ require_git
 
 SUMMARY=()
 
-IMPACTS=()
-
 FILES=()
 
-OBSERVATIONS=()
+FINDINGS=()
 
 RECOMMENDATIONS=()
+
+CONFIDENCE_SCORE=0
+CONFIDENCE_LEVEL="Unknown"
 
 DIFF_STAT=""
 
@@ -47,18 +54,9 @@ collect_summary() {
     SUMMARY=()
 
     SUMMARY+=("Working Tree: $CTX_WORKING_TREE")
-
-    SUMMARY+=(
-        "Modified: $CTX_MODIFIED"
-    )
-
-    SUMMARY+=(
-        "Untracked: $CTX_UNTRACKED"
-    )
-
-    SUMMARY+=(
-        "Staged: $CTX_STAGED"
-    )
+    SUMMARY+=("Modified: $CTX_MODIFIED")
+    SUMMARY+=("Untracked: $CTX_UNTRACKED")
+    SUMMARY+=("Staged: $CTX_STAGED")
 }
 
 collect_files() {
@@ -69,7 +67,7 @@ collect_files() {
 
         [[ -z "$line" ]] && continue
 
-        FILES+=("$line")
+        FILES+=("${line:3}")
 
     done < <(git status --short)
 }
@@ -82,10 +80,220 @@ collect_diff() {
 collect() {
 
     collect_summary
-
     collect_files
-
     collect_diff
 }
 
+###############################################################################
+# Evaluation
+###############################################################################
 
+evaluate_findings() {
+
+    FINDINGS=()
+    RECOMMENDATIONS=()
+
+    CONFIDENCE_SCORE=0
+
+    load_knowledge "$WORKSTATION_ROOT/heuristics/review"
+
+    local evidence
+
+    for evidence in "${FILES[@]}"; do
+
+        local knowledge
+
+        while IFS= read -r knowledge; do
+
+            local match_type
+            local match_value
+
+            while IFS=$'\t' read -r match_type match_value; do
+
+                if matches \
+                    "$evidence" \
+                    "$match_type" \
+                    "$match_value"; then
+
+                    FINDINGS+=(
+                        "$(jq -r \
+                            '.heuristic.findings[]' \
+                            "$knowledge")"
+                    )
+
+                    RECOMMENDATIONS+=(
+                        "$(jq -r \
+                            '.heuristic.recommendations[]' \
+                            "$knowledge")"
+                    )
+
+((CONFIDENCE_SCORE += $(jq -r '.heuristic.weight' "$knowledge")))
+
+                    break
+
+                fi
+
+            done < <(
+
+                jq -r '
+                    .heuristic.matches[]
+                    |
+                    [
+                        .type,
+                        .value
+                    ]
+                    |
+                    @tsv
+                ' "$knowledge"
+
+            )
+
+        done < <(
+
+            knowledge_files
+
+        )
+
+    done
+}
+
+evaluate_confidence() {
+
+    if (( CONFIDENCE_SCORE <= 2 )); then
+
+        CONFIDENCE_LEVEL="Very High"
+
+    elif (( CONFIDENCE_SCORE <= 5 )); then
+
+        CONFIDENCE_LEVEL="High"
+
+    elif (( CONFIDENCE_SCORE <= 8 )); then
+
+        CONFIDENCE_LEVEL="Medium"
+
+    elif (( CONFIDENCE_SCORE <= 12 )); then
+
+        CONFIDENCE_LEVEL="Low"
+
+    else
+
+        CONFIDENCE_LEVEL="Very Low"
+
+    fi
+}
+
+evaluate() {
+
+    evaluate_findings
+
+    evaluate_confidence
+}
+
+###############################################################################
+# Rendering
+###############################################################################
+
+render_summary() {
+
+    section "Summary"
+
+    local line
+
+    for line in "${SUMMARY[@]}"; do
+        printf "  • %s\n" "$line"
+    done
+}
+
+render_evidence() {
+
+    section "Evidence"
+
+    if ((${#FILES[@]} == 0)); then
+        printf "  Working tree is clean.\n"
+        return
+    fi
+
+    local file
+
+    for file in "${FILES[@]}"; do
+        printf "  %s\n" "$file"
+    done
+}
+
+render_diff() {
+
+    [[ -z "$DIFF_STAT" ]] && return
+
+    section "Diff Summary"
+
+    printf "%s\n" "$DIFF_STAT"
+}
+
+render_findings() {
+
+    section "Findings"
+
+    if ((${#FINDINGS[@]} == 0)); then
+        printf "  • No findings.\n"
+        return
+    fi
+
+    local finding
+
+    for finding in "${FINDINGS[@]}"; do
+        printf "  • %s\n" "$finding"
+    done
+}
+
+render_confidence() {
+
+    section "Engineering Confidence"
+
+    printf "  Level      %s\n" "$CONFIDENCE_LEVEL"
+    printf "  Score      %d\n" "$CONFIDENCE_SCORE"
+}
+
+render_recommendations() {
+
+    section "Recommendations"
+
+    if ((${#RECOMMENDATIONS[@]} == 0)); then
+        printf "  • Continue current work.\n"
+        return
+    fi
+
+    local recommendation
+
+    for recommendation in "${RECOMMENDATIONS[@]}"; do
+        printf "  • %s\n" "$recommendation"
+    done
+}
+
+render_human() {
+
+    heading "Engineering Confidence Review"
+
+    render_summary
+    render_evidence
+    render_diff
+    render_findings
+    render_confidence
+    render_recommendations
+
+    printf "\n"
+}
+
+###############################################################################
+# Main
+###############################################################################
+
+main() {
+
+    collect
+
+    evaluate
+
+    render_human
+}
+
+main "$@"
