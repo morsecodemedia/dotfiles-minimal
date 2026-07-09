@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "heuristic": {
+    "name": "Dependencies",
+   "category": "Dependencies",
+   "weight": 4,
+   "patterns": [
+     "package.json",
+     "package-lock.json",
+     "pnpm-lock.yaml",
+     "yarn.lock",
+     "go.mod",
+     "go.sum",
+     "Cargo.toml",
+     "Cargo.lock"
+   ],
+   "observations": [
+     "Project dependencies have changed."
+   ],
+   "recommendations": [
+     "Run project validation before committing."
+   ]
+  }
+}

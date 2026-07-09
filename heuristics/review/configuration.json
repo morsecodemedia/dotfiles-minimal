@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "heuristic": {
+    "name": "Configuration",
+    "category": "Configuration",
+    "weight": 3,
+    "patterns": [
+      ".profile",
+      ".profile.d/*",
+      ".editorconfig",
+      ".gitignore",
+      ".nvmrc"
+    ],
+    "observations": [
+      "Engineering configuration has changed."
+    ],
+    "recommendations": [
+      "Verify workstation behavior before committing."
+    ]
+  }
+}

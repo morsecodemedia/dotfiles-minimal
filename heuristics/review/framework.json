@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "heuristic": {
+    "name": "Framework",
+   "category": "Framework",
+   "weight": 5,
+   "matches": [
+     "lib/*"
+   ],
+   "observation": "Shared framework behavior has changed.",
+   "recommendation": "Validate downstream workstation commands."
+  }
+}

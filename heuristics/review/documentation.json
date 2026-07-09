@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "heuristic": {
+    "name": "Documentation",
+   "category": "Documentation",
+   "weight": 1,
+   "matches": [
+     "README.md",
+     "PLAN.md",
+     "ROADMAP.md",
+     "ARCHITECTURE.md",
+     "docs/*"
+   ],
+   "observation": "Documentation has changed.",
+   "recommendation": "Proofread documentation before committing."
+  }
+}
