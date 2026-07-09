@@ -1,42 +1,38 @@
 #!/usr/bin/env bash
 
 ###############################################################################
-# Matcher
-#
-# Matches evidence against implementation-agnostic knowledge definitions.
+# Matcher Engine
 #
 # Responsibilities
 #
-#   - Exact matching
-#   - Prefix matching
+#   - Match evidence against knowledge.
 #
 # Non-Responsibilities
 #
-#   - Loading knowledge
+#   - Loading JSON
 #   - Inference
 #   - Confidence
 #   - Rendering
 ###############################################################################
 
-
 ###############################################################################
-# Matchers
+# Primitive Matchers
 ###############################################################################
 
 matches_exact() {
 
     local evidence="$1"
-    local expected="$2"
+    local value="$2"
 
-    [[ "$evidence" == "$expected" ]]
+    [[ "$evidence" == "$value" ]]
 }
 
 matches_prefix() {
 
     local evidence="$1"
-    local prefix="$2"
+    local value="$2"
 
-    [[ "$evidence" == "$prefix"* ]]
+    [[ "$evidence" == "$value"* ]]
 }
 
 ###############################################################################
