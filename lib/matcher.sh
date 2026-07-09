@@ -3,61 +3,74 @@
 ###############################################################################
 # Matcher
 #
-# Matches evidence against shell glob patterns.
+# Matches evidence against implementation-agnostic knowledge definitions.
 #
-# Responsibilities:
+# Responsibilities
 #
-#   - Match evidence
-#   - Return success or failure
+#   - Exact matching
+#   - Prefix matching
 #
-# Non-Responsibilities:
+# Non-Responsibilities
 #
-#   - JSON
-#   - Knowledge
+#   - Loading knowledge
 #   - Inference
 #   - Confidence
 #   - Rendering
 ###############################################################################
 
-set -euo pipefail
 
 ###############################################################################
-# Matching
+# Matchers
 ###############################################################################
 
-matches_pattern() {
+matches_exact() {
 
     local evidence="$1"
-    local pattern="$2"
+    local expected="$2"
 
-    case "$evidence" in
+    [[ "$evidence" == "$expected" ]]
+}
 
-        $pattern)
-            return 0
+matches_prefix() {
+
+    local evidence="$1"
+    local prefix="$2"
+
+    [[ "$evidence" == "$prefix"* ]]
+}
+
+###############################################################################
+# Dispatcher
+###############################################################################
+
+matches() {
+
+    local evidence="$1"
+    local type="$2"
+    local value="$3"
+
+    case "$type" in
+
+        exact)
+
+            matches_exact \
+                "$evidence" \
+                "$value"
+
+            ;;
+
+        prefix)
+
+            matches_prefix \
+                "$evidence" \
+                "$value"
+
             ;;
 
         *)
+
             return 1
             ;;
 
     esac
-}
-
-matches_any_pattern() {
-
-    local evidence="$1"
-
-    shift
-
-    local pattern
-
-    for pattern in "$@"; do
-
-        if matches_pattern "$evidence" "$pattern"; then
-            return 0
-        fi
-
-    done
-
-    return 1
 }

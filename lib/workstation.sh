@@ -7,7 +7,6 @@ fi
 
 export WORKSTATION_INITIALIZED=1
 
-set -euo pipefail
 
 ###############################################################################
 # Runtime

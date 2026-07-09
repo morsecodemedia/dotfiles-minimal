@@ -4,8 +4,6 @@
 # Heuristic Engine
 ###############################################################################
 
-set -euo pipefail
-
 HEURISTIC_NAMES=()
 HEURISTIC_CATEGORIES=()
 HEURISTIC_WEIGHTS=()
