@@ -2,16 +2,35 @@
   "version": 1,
   "heuristic": {
     "name": "Documentation",
-   "category": "Documentation",
-   "weight": 1,
-   "matches": [
-     "README.md",
-     "PLAN.md",
-     "ROADMAP.md",
-     "ARCHITECTURE.md",
-     "docs/*"
-   ],
-   "observation": "Documentation has changed.",
-   "recommendation": "Proofread documentation before committing."
+    "category": "Documentation",
+    "weight": 1,
+    "matches": [
+      {
+        "type": "exact",
+        "value": "README.md"
+      },
+      {
+        "type": "exact",
+        "value": "PLAN.md"
+      },
+      {
+        "type": "exact",
+        "value": "ROADMAP.md"
+      },
+      {
+        "type": "exact",
+        "value": "ARCHITECTURE.md"
+      },
+      {
+        "type": "prefix",
+        "value": "docs/"
+      }
+    ],
+    "findings": [
+      "Documentation has changed."
+    ],
+    "recommendations": [
+      "Proofread documentation before committing."
+    ]
   }
 }

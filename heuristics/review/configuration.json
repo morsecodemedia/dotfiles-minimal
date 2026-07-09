@@ -4,14 +4,29 @@
     "name": "Configuration",
     "category": "Configuration",
     "weight": 3,
-    "patterns": [
-      ".profile",
-      ".profile.d/*",
-      ".editorconfig",
-      ".gitignore",
-      ".nvmrc"
+    "matches": [
+      {
+        "type": "exact",
+        "value": ".profile"
+      },
+      {
+        "type": "prefix",
+        "value": ".profile.d/"
+      },
+      {
+        "type": "exact",
+        "value": ".editorconfig"
+      },
+      {
+        "type": "exact",
+        "value": ".gitignore"
+      },
+      {
+        "type": "exact",
+        "value": ".nvmrc"
+      }
     ],
-    "observations": [
+    "findings": [
       "Engineering configuration has changed."
     ],
     "recommendations": [

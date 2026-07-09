@@ -2,12 +2,19 @@
   "version": 1,
   "heuristic": {
     "name": "Executable",
-   "category": "Executable",
-   "weight": 5,
-   "matches": [
-     "bin/*"
-   ],
-   "observation": "Executable behavior has changed.",
-   "recommendation": "Review executable changes before committing."
+    "category": "Executable",
+    "weight": 5,
+    "matches": [
+      {
+        "type": "prefix",
+        "value": "bin/"
+      }
+    ],
+    "findings": [
+      "Executable behavior has changed."
+    ],
+    "recommendations": [
+      "Review executable changes before committing."
+    ]
   }
 }

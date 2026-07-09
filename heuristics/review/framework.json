@@ -2,12 +2,19 @@
   "version": 1,
   "heuristic": {
     "name": "Framework",
-   "category": "Framework",
-   "weight": 5,
-   "matches": [
-     "lib/*"
-   ],
-   "observation": "Shared framework behavior has changed.",
-   "recommendation": "Validate downstream workstation commands."
+    "category": "Framework",
+    "weight": 5,
+    "matches": [
+      {
+        "type": "prefix",
+        "value": "lib/"
+      }
+    ],
+    "findings": [
+      "Shared framework behavior has changed."
+    ],
+    "recommendations": [
+      "Validate downstream workstation commands."
+    ]
   }
 }
