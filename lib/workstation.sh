@@ -1,11 +1,11 @@
 #!/opt/homebrew/bin/bash
 
-# Prevent multiple initialization.
+# Prevent multiple initialization within the current shell.
 if [[ -n "${WORKSTATION_INITIALIZED:-}" ]]; then
     return
 fi
 
-export WORKSTATION_INITIALIZED=1
+readonly WORKSTATION_INITIALIZED=1
 
 
 ###############################################################################
