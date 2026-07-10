@@ -1,0 +1,67 @@
+#!/opt/homebrew/bin/bash
+
+set -euo pipefail
+cat "$HOME/.config/nextgen-workstation/runtime.env"
+###############################################################################
+# Bootstrap
+###############################################################################
+
+# shellcheck source=/dev/null
+source "$HOME/.config/nextgen-workstation/runtime.env"
+
+# shellcheck source=/dev/null
+source "$WORKSTATION_ROOT/lib/workstation.sh"
+
+# shellcheck source=/dev/null
+source "$WORKSTATION_ROOT/lib/knowledge.sh"
+
+# shellcheck source=/dev/null
+source "$WORKSTATION_ROOT/lib/matcher.sh"
+
+###############################################################################
+# Banner
+###############################################################################
+
+cat <<EOF
+
+NextGen Workstation Lab
+=======================
+
+Runtime
+--------
+
+Root      $WORKSTATION_ROOT
+Bash      $BASH_VERSION
+
+Knowledge
+---------
+
+Run:
+
+    load_knowledge "\$WORKSTATION_ROOT/heuristics/review"
+
+Examples:
+
+    knowledge_count
+
+    knowledge_items
+
+    knowledge_matches <file>
+
+    knowledge_findings <file>
+
+    knowledge_recommendations <file>
+
+Matcher
+
+    matches "bin/review" prefix "bin/"
+
+Type 'exit' when finished.
+
+EOF
+
+###############################################################################
+# Interactive Shell
+###############################################################################
+
+exec bash --noprofile --norc -i

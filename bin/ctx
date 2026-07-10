@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/opt/homebrew/bin/bash
 
 set -euo pipefail
 
@@ -103,17 +103,17 @@ collect_repository() {
 
         # Staged
         if [[ "$index" != " " && "$index" != "?" ]]; then
-            ((STAGED_COUNT++))
+            (( ++STAGED_COUNT ))
         fi
 
         # Modified
         if [[ "$worktree" == "M" ]]; then
-            ((MODIFIED_COUNT++))
+            (( ++MODIFIED_COUNT ))
         fi
 
         # Untracked
         if [[ "$index$worktree" == "??" ]]; then
-            ((UNTRACKED_COUNT++))
+            (( ++UNTRACKED_COUNT ))
         fi
 
     done < <(git status --porcelain)

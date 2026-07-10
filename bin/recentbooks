@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/opt/homebrew/bin/bash
 
 # Grab the RSS feed from goodreads, grab the fields we care about, then format
 # the output as a recfile.

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/opt/homebrew/bin/bash
 
 # Prevent multiple initialization.
 if [[ -n "${WORKSTATION_INITIALIZED:-}" ]]; then

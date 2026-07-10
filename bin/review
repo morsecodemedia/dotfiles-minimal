@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/opt/homebrew/bin/bash
 
 set -euo pipefail
 
@@ -57,7 +57,13 @@ collect_evidence() {
 
     EVIDENCE=()
 
-    while IFS= read -r line; do
+    mapfile -t STATUS_LINES < <(
+        git status --short
+    )
+
+    local line
+
+    for line in "${STATUS_LINES[@]}"; do
 
         [[ -z "$line" ]] && continue
 
@@ -66,9 +72,7 @@ collect_evidence() {
         #
         EVIDENCE+=("${line:3}")
 
-    done < <(
-        git status --short
-    )
+    done
 }
 
 collect_diff() {
@@ -91,94 +95,104 @@ collect() {
 # Evaluation
 ###############################################################################
 
-record_finding() {
+record_knowledge() {
 
     local knowledge="$1"
 
+    mapfile -t NEW_FINDINGS < <(
+        knowledge_findings "$knowledge"
+    )
+
     local finding
 
-    while IFS= read -r finding; do
+    for finding in "${NEW_FINDINGS[@]}"; do
         FINDINGS+=("$finding")
-    done < <(
-        knowledge_findings "$knowledge"
+    done
+
+    mapfile -t NEW_RECOMMENDATIONS < <(
+        knowledge_recommendations "$knowledge"
     )
 
     local recommendation
 
-    while IFS= read -r recommendation; do
+    for recommendation in "${NEW_RECOMMENDATIONS[@]}"; do
         RECOMMENDATIONS+=("$recommendation")
-    done < <(
-        knowledge_recommendations "$knowledge"
-    )
+    done
 
     ((CONFIDENCE_SCORE += $(knowledge_weight "$knowledge")))
-}
-
-evaluate_knowledge() {
-
-    local evidence="$1"
-    local knowledge="$2"
-
-    local type
-    local value
-
-printf 'knowledge=[%s]\n' "$knowledge" >&2
-
-knowledge_matches "$knowledge" | while IFS=$'\t' read -r type value; do
-
-        if matches \
-            "$evidence" \
-            "$type" \
-            "$value"; then
-
-            record_finding "$knowledge"
-
-            return
-
-        fi
-      done
 }
 
 evaluate_evidence() {
 
     local evidence="$1"
 
-    local knowledge
-
-    while IFS= read -r knowledge; do
-
-        evaluate_knowledge \
-            "$evidence" \
-            "$knowledge"
-
-    done < <(
+    mapfile -t KNOWLEDGE_ITEMS < <(
         knowledge_items
     )
+
+    local knowledge
+
+    for knowledge in "${KNOWLEDGE_ITEMS[@]}"; do
+
+        mapfile -t MATCHES < <(
+            knowledge_matches "$knowledge"
+        )
+
+        local match
+
+        for match in "${MATCHES[@]}"; do
+
+            local type
+            local value
+
+            IFS=$'\t' read -r type value <<<"$match"
+
+            if matches \
+                "$evidence" \
+                "$type" \
+                "$value"; then
+
+                record_knowledge "$knowledge"
+
+                break
+
+            fi
+
+        done
+
+    done
 }
 
 evaluate_confidence() {
 
-    if (( CONFIDENCE_SCORE <= 2 )); then
+    case "$CONFIDENCE_SCORE" in
 
-        CONFIDENCE_LEVEL="Very High"
+        0|1|2)
 
-    elif (( CONFIDENCE_SCORE <= 5 )); then
+            CONFIDENCE_LEVEL="Very High"
+            ;;
 
-        CONFIDENCE_LEVEL="High"
+        3|4|5)
 
-    elif (( CONFIDENCE_SCORE <= 8 )); then
+            CONFIDENCE_LEVEL="High"
+            ;;
 
-        CONFIDENCE_LEVEL="Medium"
+        6|7|8)
 
-    elif (( CONFIDENCE_SCORE <= 12 )); then
+            CONFIDENCE_LEVEL="Medium"
+            ;;
 
-        CONFIDENCE_LEVEL="Low"
+        9|10|11|12)
 
-    else
+            CONFIDENCE_LEVEL="Low"
+            ;;
 
-        CONFIDENCE_LEVEL="Very Low"
+        *)
 
-    fi
+            CONFIDENCE_LEVEL="Very Low"
+            ;;
+
+    esac
 }
 
 evaluate() {
@@ -226,10 +240,10 @@ render_evidence() {
         return
     fi
 
-    local item
+    local evidence
 
-    for item in "${EVIDENCE[@]}"; do
-        printf "  %s\n" "$item"
+    for evidence in "${EVIDENCE[@]}"; do
+        printf "  %s\n" "$evidence"
     done
 }
 
@@ -251,9 +265,35 @@ render_findings() {
         return
     fi
 
+    #
+    # Deduplicate findings while preserving order.
+    #
+
+    local UNIQUE=()
+
     local finding
 
     for finding in "${FINDINGS[@]}"; do
+
+        local seen=false
+        local existing
+
+        for existing in "${UNIQUE[@]}"; do
+
+            if [[ "$existing" == "$finding" ]]; then
+                seen=true
+                break
+            fi
+
+        done
+
+        if ! $seen; then
+            UNIQUE+=("$finding")
+        fi
+
+    done
+
+    for finding in "${UNIQUE[@]}"; do
         printf "  • %s\n" "$finding"
     done
 }
@@ -275,9 +315,35 @@ render_recommendations() {
         return
     fi
 
+    #
+    # Deduplicate recommendations while preserving order.
+    #
+
+    local UNIQUE=()
+
     local recommendation
 
     for recommendation in "${RECOMMENDATIONS[@]}"; do
+
+        local seen=false
+        local existing
+
+        for existing in "${UNIQUE[@]}"; do
+
+            if [[ "$existing" == "$recommendation" ]]; then
+                seen=true
+                break
+            fi
+
+        done
+
+        if ! $seen; then
+            UNIQUE+=("$recommendation")
+        fi
+
+    done
+
+    for recommendation in "${UNIQUE[@]}"; do
         printf "  • %s\n" "$recommendation"
     done
 }
