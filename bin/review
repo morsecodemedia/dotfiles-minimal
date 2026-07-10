@@ -6,14 +6,6 @@ set -euo pipefail
 # Bootstrap
 ###############################################################################
 
-#
-# Runtime Contract
-#
-# During platform development the runtime contract is created manually.
-#
-# Future versions will generate this file automatically.
-#
-
 # shellcheck source=/dev/null
 source "$HOME/.config/nextgen-workstation/runtime.env"
 
@@ -36,7 +28,7 @@ require_git
 
 SUMMARY=()
 
-FILES=()
+EVIDENCE=()
 
 FINDINGS=()
 
@@ -61,102 +53,107 @@ collect_summary() {
     SUMMARY+=("Staged: $CTX_STAGED")
 }
 
-collect_files() {
+collect_evidence() {
 
-    FILES=()
+    EVIDENCE=()
 
     while IFS= read -r line; do
 
         [[ -z "$line" ]] && continue
 
-        FILES+=("${line:3}")
+        #
+        # Strip git status prefix.
+        #
+        EVIDENCE+=("${line:3}")
 
-    done < <(git status --short)
+    done < <(
+        git status --short
+    )
 }
 
 collect_diff() {
 
-    DIFF_STAT="$(git diff --stat)"
+    DIFF_STAT="$(
+        git diff --stat
+    )"
 }
 
 collect() {
 
     collect_summary
-    collect_files
+
+    collect_evidence
+
     collect_diff
 }
-
 
 ###############################################################################
 # Evaluation
 ###############################################################################
 
-evaluate_findings() {
+record_finding() {
 
-    load_knowledge "$WORKSTATION_ROOT/heuristics/review"
-    FINDINGS=()
-    RECOMMENDATIONS=()
+    local knowledge="$1"
 
-    CONFIDENCE_SCORE=0
+    local finding
 
-    local evidence
+    while IFS= read -r finding; do
+        FINDINGS+=("$finding")
+    done < <(
+        knowledge_findings "$knowledge"
+    )
 
-    for evidence in "${FILES[@]}"; do
+    local recommendation
 
-        local knowledge
+    while IFS= read -r recommendation; do
+        RECOMMENDATIONS+=("$recommendation")
+    done < <(
+        knowledge_recommendations "$knowledge"
+    )
 
-        while IFS= read -r knowledge; do
+    ((CONFIDENCE_SCORE += $(knowledge_weight "$knowledge")))
+}
 
-            local match_type
-            local match_value
+evaluate_knowledge() {
 
-            while IFS=$'\t' read -r match_type match_value; do
+    local evidence="$1"
+    local knowledge="$2"
 
-                if matches \
-                    "$evidence" \
-                    "$match_type" \
-                    "$match_value"; then
+    local type
+    local value
 
-                    FINDINGS+=(
-                        "$(jq -r \
-                            '.heuristic.findings[]' \
-                            "$knowledge")"
-                    )
+printf 'knowledge=[%s]\n' "$knowledge" >&2
 
-                    RECOMMENDATIONS+=(
-                        "$(jq -r \
-                            '.heuristic.recommendations[]' \
-                            "$knowledge")"
-                    )
+knowledge_matches "$knowledge" | while IFS=$'\t' read -r type value; do
 
-((CONFIDENCE_SCORE += $(jq -r '.heuristic.weight' "$knowledge")))
+        if matches \
+            "$evidence" \
+            "$type" \
+            "$value"; then
 
-                    break
+            record_finding "$knowledge"
 
-                fi
+            return
 
-            done < <(
+        fi
+      done
+}
 
-                jq -r '
-                    .heuristic.matches[]
-                    |
-                    [
-                        .type,
-                        .value
-                    ]
-                    |
-                    @tsv
-                ' "$knowledge"
+evaluate_evidence() {
 
-            )
+    local evidence="$1"
 
-        done < <(
+    local knowledge
 
-            knowledge_files
+    while IFS= read -r knowledge; do
 
-        )
+        evaluate_knowledge \
+            "$evidence" \
+            "$knowledge"
 
-    done
+    done < <(
+        knowledge_items
+    )
 }
 
 evaluate_confidence() {
@@ -186,7 +183,21 @@ evaluate_confidence() {
 
 evaluate() {
 
-    evaluate_findings
+    FINDINGS=()
+    RECOMMENDATIONS=()
+
+    CONFIDENCE_SCORE=0
+
+    load_knowledge \
+        "$WORKSTATION_ROOT/heuristics/review"
+
+    local evidence
+
+    for evidence in "${EVIDENCE[@]}"; do
+
+        evaluate_evidence "$evidence"
+
+    done
 
     evaluate_confidence
 }
@@ -210,15 +221,15 @@ render_evidence() {
 
     section "Evidence"
 
-    if ((${#FILES[@]} == 0)); then
+    if ((${#EVIDENCE[@]} == 0)); then
         printf "  Working tree is clean.\n"
         return
     fi
 
-    local file
+    local item
 
-    for file in "${FILES[@]}"; do
-        printf "  %s\n" "$file"
+    for item in "${EVIDENCE[@]}"; do
+        printf "  %s\n" "$item"
     done
 }
 
@@ -276,10 +287,15 @@ render_human() {
     heading "Engineering Confidence Review"
 
     render_summary
+
     render_evidence
+
     render_diff
+
     render_findings
+
     render_confidence
+
     render_recommendations
 
     printf "\n"

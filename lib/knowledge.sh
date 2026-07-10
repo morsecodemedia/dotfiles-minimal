@@ -8,8 +8,8 @@
 # Responsibilities
 #
 #   - Discover knowledge
-#   - Validate JSON
-#   - Expose knowledge through a stable API
+#   - Validate knowledge
+#   - Expose a stable API
 #
 # Non-Responsibilities
 #
@@ -35,20 +35,18 @@ load_knowledge() {
 
     KNOWLEDGE=()
 
-    while IFS= read -r file; do
-
-        jq empty "$file"
-
-        KNOWLEDGE+=("$file")
-
-    done < <(
-
+    mapfile -t KNOWLEDGE < <(
         find "$directory" \
             -type f \
             -name '*.json' \
             | sort
-
     )
+
+    local file
+
+    for file in "${KNOWLEDGE[@]}"; do
+        jq empty "$file" >/dev/null
+    done
 }
 
 ###############################################################################
@@ -57,12 +55,12 @@ load_knowledge() {
 
 knowledge_count() {
 
-    printf "%d\n" "${#KNOWLEDGE[@]}"
+    printf '%d\n' "${#KNOWLEDGE[@]}"
 }
 
 knowledge_items() {
 
-    printf "%s\n" "${KNOWLEDGE[@]-}"
+    printf '%s\n' "${KNOWLEDGE[@]}"
 }
 
 ###############################################################################
@@ -71,17 +69,23 @@ knowledge_items() {
 
 knowledge_name() {
 
-    jq -r '.heuristic.name' "$1"
+    local file="$1"
+
+    jq -r '.heuristic.name' "$file"
 }
 
 knowledge_category() {
 
-    jq -r '.heuristic.category' "$1"
+    local file="$1"
+
+    jq -r '.heuristic.category' "$file"
 }
 
 knowledge_weight() {
 
-    jq -r '.heuristic.weight' "$1"
+    local file="$1"
+
+    jq -r '.heuristic.weight' "$file"
 }
 
 ###############################################################################
@@ -89,6 +93,8 @@ knowledge_weight() {
 ###############################################################################
 
 knowledge_matches() {
+
+    local file="$1"
 
     jq -r '
         .heuristic.matches[]
@@ -99,7 +105,7 @@ knowledge_matches() {
         ]
         |
         @tsv
-    ' "$1"
+    ' "$file"
 }
 
 ###############################################################################
@@ -108,14 +114,18 @@ knowledge_matches() {
 
 knowledge_findings() {
 
+    local file="$1"
+
     jq -r '
         .heuristic.findings[]
-    ' "$1"
+    ' "$file"
 }
 
 knowledge_recommendations() {
 
+    local file="$1"
+
     jq -r '
         .heuristic.recommendations[]
-    ' "$1"
+    ' "$file"
 }
