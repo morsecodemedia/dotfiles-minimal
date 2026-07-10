@@ -11,24 +11,27 @@ path() {
   [ -d "$1" ] && PATH="${PATH}${PATH:+:}$1"
 }
 
-#
-# Core Operating System
-#
-
-PATH=/bin
-path "/usr/bin"
-path "/usr/local/bin"
-
-#
+############################################################
 # Homebrew
 #
+# Homebrew is the primary userspace.
+############################################################
 
-path "/opt/homebrew/bin"
+PATH="/opt/homebrew/bin"
+
 path "/opt/homebrew/opt/coreutils/libexec/gnubin"
 path "/opt/homebrew/opt/make/libexec/gnubin"
 
 # Prefer Homebrew libxml2 over the system version.
-export PATH="/opt/homebrew/opt/libxml2/bin:$PATH"
+PATH="/opt/homebrew/opt/libxml2/bin:$PATH"
+
+############################################################
+# Core Operating System
+############################################################
+
+path "/usr/local/bin"
+path "/usr/bin"
+path "/bin"
 
 #
 # System Administration
