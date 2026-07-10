@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 
 ###############################################################################
-# Knowledge Loader
+# Knowledge Engine
 #
-# Loads workstation knowledge definitions from JSON.
+# Loads and exposes workstation knowledge.
 #
-# Responsibilities:
+# Responsibilities
 #
-#   - Discover JSON knowledge files
+#   - Discover knowledge
 #   - Validate JSON
-#   - Return knowledge file paths
+#   - Expose knowledge through a stable API
 #
-# Non-Responsibilities:
+# Non-Responsibilities
 #
 #   - Matching
 #   - Inference
@@ -19,12 +19,11 @@
 #   - Rendering
 ###############################################################################
 
-
 ###############################################################################
 # State
 ###############################################################################
 
-KNOWLEDGE_FILES=()
+KNOWLEDGE=()
 
 ###############################################################################
 # Loading
@@ -34,16 +33,13 @@ load_knowledge() {
 
     local directory="$1"
 
-    KNOWLEDGE_FILES=()
+    KNOWLEDGE=()
 
     while IFS= read -r file; do
 
-        #
-        # Ensure the JSON is valid before accepting it.
-        #
         jq empty "$file"
 
-        KNOWLEDGE_FILES+=("$file")
+        KNOWLEDGE+=("$file")
 
     done < <(
 
@@ -56,15 +52,70 @@ load_knowledge() {
 }
 
 ###############################################################################
-# Accessors
+# Collection
 ###############################################################################
 
 knowledge_count() {
 
-    printf "%d\n" "${#KNOWLEDGE_FILES[@]}"
+    printf "%d\n" "${#KNOWLEDGE[@]}"
 }
 
-knowledge_files() {
+knowledge_items() {
 
-    printf "%s\n" "${KNOWLEDGE_FILES[@]}"
+    printf "%s\n" "${KNOWLEDGE[@]-}"
+}
+
+###############################################################################
+# Metadata
+###############################################################################
+
+knowledge_name() {
+
+    jq -r '.heuristic.name' "$1"
+}
+
+knowledge_category() {
+
+    jq -r '.heuristic.category' "$1"
+}
+
+knowledge_weight() {
+
+    jq -r '.heuristic.weight' "$1"
+}
+
+###############################################################################
+# Matching
+###############################################################################
+
+knowledge_matches() {
+
+    jq -r '
+        .heuristic.matches[]
+        |
+        [
+            .type,
+            .value
+        ]
+        |
+        @tsv
+    ' "$1"
+}
+
+###############################################################################
+# Findings
+###############################################################################
+
+knowledge_findings() {
+
+    jq -r '
+        .heuristic.findings[]
+    ' "$1"
+}
+
+knowledge_recommendations() {
+
+    jq -r '
+        .heuristic.recommendations[]
+    ' "$1"
 }

@@ -6,22 +6,24 @@ set -euo pipefail
 # Bootstrap
 ###############################################################################
 
-SCRIPT_DIR="$(
-    cd "$(dirname "${BASH_SOURCE[0]}")" && pwd
-)"
+#
+# Runtime Contract
+#
+# During platform development the runtime contract is created manually.
+#
+# Future versions will generate this file automatically.
+#
 
-WORKSTATION_ROOT="$(
-    cd "$SCRIPT_DIR/.." && pwd
-)"
+# shellcheck source=/dev/null
+source "$HOME/.config/nextgen-workstation/runtime.env"
 
-# shellcheck source-path=SCRIPTDIR/..
-# shellcheck source=lib/workstation.sh
+# shellcheck source=/dev/null
 source "$WORKSTATION_ROOT/lib/workstation.sh"
 
-# shellcheck source=lib/knowledge.sh
+# shellcheck source=/dev/null
 source "$WORKSTATION_ROOT/lib/knowledge.sh"
 
-# shellcheck source=lib/matcher.sh
+# shellcheck source=/dev/null
 source "$WORKSTATION_ROOT/lib/matcher.sh"
 
 eval "$(ctx --env)"
@@ -84,18 +86,18 @@ collect() {
     collect_diff
 }
 
+
 ###############################################################################
 # Evaluation
 ###############################################################################
 
 evaluate_findings() {
 
+    load_knowledge "$WORKSTATION_ROOT/heuristics/review"
     FINDINGS=()
     RECOMMENDATIONS=()
 
     CONFIDENCE_SCORE=0
-
-    load_knowledge "$WORKSTATION_ROOT/heuristics/review"
 
     local evidence
 
