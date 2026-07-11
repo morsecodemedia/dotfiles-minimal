@@ -11,8 +11,7 @@ The Review Engine consumes the Context Engine and repository evidence to answer 
 
 Review does **not** replace Git.
 
-It interprets Git through engineering heuristics.
-
+Review is not a code review tool. Git already shows what changed. Review exists to prioritize engineering attention by identifying the changes most likely to have meaningful downstream impact, while minimizing noise and reducing context switching.
 ---
 
 # Philosophy
