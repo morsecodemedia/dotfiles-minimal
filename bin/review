@@ -47,17 +47,8 @@ FINDINGS=()
 RECOMMENDATIONS=()
 
 #
-# Legacy Confidence Model
-#
-# Temporary until Engineering Focus replaces Engineering Confidence.
-#
-
-CONFIDENCE_SCORE=0
-CONFIDENCE_LEVEL="Unknown"
-
-###############################################################################
 # Collection
-###############################################################################
+#
 
 SUMMARY=()
 
@@ -312,7 +303,6 @@ record_knowledge() {
         RECOMMENDATIONS+=("$recommendation")
     done
 
-    ((CONFIDENCE_SCORE += $(knowledge_weight "$knowledge")))
 }
 
 evaluate_evidence() {
@@ -356,38 +346,6 @@ evaluate_evidence() {
     done
 }
 
-evaluate_confidence() {
-
-    case "$CONFIDENCE_SCORE" in
-
-        0|1|2)
-
-            CONFIDENCE_LEVEL="Very High"
-            ;;
-
-        3|4|5)
-
-            CONFIDENCE_LEVEL="High"
-            ;;
-
-        6|7|8)
-
-            CONFIDENCE_LEVEL="Medium"
-            ;;
-
-        9|10|11|12)
-
-            CONFIDENCE_LEVEL="Low"
-            ;;
-
-        *)
-
-            CONFIDENCE_LEVEL="Very Low"
-            ;;
-
-    esac
-}
-
 evaluate() {
 
     RISK_PRIMARY=()
@@ -399,7 +357,6 @@ evaluate() {
     FINDINGS=()
     RECOMMENDATIONS=()
 
-    CONFIDENCE_SCORE=0
 
     load_knowledge \
         "$WORKSTATION_ROOT/heuristics/review"
@@ -411,7 +368,6 @@ evaluate() {
         evaluate_evidence "$evidence"
 
     done
-    evaluate_confidence
 }
 
 ###############################################################################
@@ -553,14 +509,6 @@ render_focus() {
     fi
 }
 
-render_confidence() {
-
-    section "Engineering Confidence"
-
-    printf "  Level      %s\n" "$CONFIDENCE_LEVEL"
-    printf "  Score      %d\n" "$CONFIDENCE_SCORE"
-}
-
 render_recommendations() {
 
     section "Recommendations"
@@ -616,8 +564,6 @@ render_human() {
     render_focus
 
     render_findings
-
-    render_confidence
 
     render_recommendations
 
