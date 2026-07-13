@@ -1,50 +1,138 @@
+# Review
 
-# Review v1.0
+Version
 
-## Mission
+**v1.0**
 
-Transform repository changes into explainable engineering confidence.
+Status
 
-The Review Engine consumes the Context Engine and repository evidence to answer one question:
+**In Development**
 
-> **How confident should an engineer be before continuing?**
+---
+
+# Mission
+
+Review is an engineering review prioritization engine.
+
+Git answers one question:
+
+> **What changed?**
+
+Review answers three:
+
+> **What deserves my attention first?**
+>
+> **Why does it matter?**
+>
+> **What should I do next?**
 
 Review does **not** replace Git.
 
-Review is not a code review tool. Git already shows what changed. Review exists to prioritize engineering attention by identifying the changes most likely to have meaningful downstream impact, while minimizing noise and reducing context switching.
+Review exists to reduce engineering uncertainty by helping engineers spend their limited review time where it matters most.
+
 ---
 
 # Philosophy
 
-The Review Engine exists to reduce engineering uncertainty.
+Review transforms repository evidence into engineering priorities.
 
-It transforms raw repository evidence into engineering judgment using deterministic heuristics.
+It is intentionally deterministic.
 
 Every conclusion must be explainable.
 
 Every recommendation must be traceable to evidence.
 
+The goal is not to replace engineering judgment.
+
+The goal is to improve it.
+
+---
+
+# Core Principles
+
+## Attention is finite.
+
+Every line shown to the engineer must earn its place.
+
+## Silence is signal.
+
+Domains that require no attention should not appear.
+
+Review never renders "None."
+
+## Prioritize before explaining.
+
+Review first identifies where attention belongs.
+
+Only then does it explain why.
+
+## Recommendations reduce context switching.
+
+Recommendations should minimize the number of decisions an engineer must make after reading Review.
+
+Whenever practical, recommendations should be immediately actionable.
+
+## Explain why, not just what.
+
+Git already explains what changed.
+
+Review explains why the change matters.
+
+---
+
+# Engineering Domains
+
+Review classifies repository changes into engineering domains.
+
+Domains represent areas of engineering attention.
+
+## Risk-bearing
+
+Risk-bearing domains influence engineering review priority.
+
+Examples include:
+
+* Framework
+* Executable
+* Dependencies
+* Configuration
+* Build System
+
+## Informational
+
+Informational domains provide context without materially increasing engineering risk.
+
+Examples include:
+
+* Documentation
+* Architecture
+* Roadmap
+* Assets
+
+Informational domains should never overshadow risk-bearing domains.
+
 ---
 
 # Responsibilities
 
-The Review Engine is responsible for:
+Review is responsible for:
 
-* Consuming the Context Engine.
+* Consuming engineering context.
 * Collecting repository evidence.
-* Classifying engineering change categories.
-* Producing engineering observations.
-* Calculating engineering confidence.
-* Recommending the next engineering action.
+* Identifying engineering domains.
+* Prioritizing engineering attention.
+* Explaining engineering impact.
+* Recommending the next engineering actions.
 
 ---
 
 # Non-Goals
 
-The Review Engine does **not**:
+Review does **not**:
 
 * Replace Git.
 * Replace code review.
+* Perform static analysis.
 * Generate code.
 * Launch AI.
 * Modify repositories.
@@ -56,19 +144,19 @@ The Review Engine does **not**:
 
 ## Context Engine
 
-The Review Engine consumes the Context Engine as its single source of engineering context.
+Review consumes the Context Engine as its single source of engineering context.
 
 Repository metadata must never be recollected.
 
 ## Repository Evidence
 
-The Review Engine may collect only repository evidence that is not already owned by the Context Engine.
+Review may collect repository evidence not already owned by the Context Engine.
 
 Examples include:
 
 * Changed files
 * Diff statistics
-* Rename detection
+* Renames
 * Insertions
 * Deletions
 
@@ -76,22 +164,22 @@ Examples include:
 
 # Processing Pipeline
 
-The Review Engine follows a deterministic pipeline.
+Review follows a deterministic pipeline.
 
 ```text
-Evidence
+Repository Evidence
 
 ↓
 
-Change Categories
+Engineering Domains
 
 ↓
 
-Engineering Observations
+Review Priorities
 
 ↓
 
-Engineering Confidence
+Engineering Context
 
 ↓
 
@@ -104,98 +192,93 @@ Each stage has exactly one responsibility.
 
 # Human Output Contract
 
-The human interface renders information in the following order.
+Review should communicate information in the following order.
 
 ## Summary
 
-Executive summary of repository activity.
+High-level repository state.
 
-## Change Categories
+## Review Priorities
 
-Engineering categories affected by the current changes.
+Engineering domains requiring attention.
 
-Examples include:
+Domains should be grouped by importance.
 
-* Executable
-* Framework
-* Configuration
-* Documentation
-* Dependencies
-* Build System
-* Tests
-* Assets
+Example:
+
+```text
+Review Priorities
+
+Risk-bearing
+
+Primary
+
+• Framework
+
+Present
+
+• Executable
+
+Informational
+
+Present
+
+• Documentation
+```
+
+Domains with no activity must not be rendered.
 
 ## Evidence
 
-Raw repository evidence supporting the review.
+Repository evidence supporting the review.
 
-## Diff Summary
+## Engineering Context
 
-Repository diff statistics.
+Explain why each active engineering domain deserves attention.
 
-## Engineering Observations
+Context should answer:
 
-Deterministic engineering conclusions derived from the evidence.
+> Why should I care?
 
-## Engineering Confidence
-
-Overall engineering confidence.
-
-Confidence Levels:
-
-* Very High
-* High
-* Medium
-* Low
-* Very Low
+Whenever possible, context should explain downstream impact rather than simply describing the changed file.
 
 ## Recommendations
 
-Exactly one or more actionable engineering recommendations.
+Recommendations should be actionable.
 
-Recommendations are derived from observations.
+Recommendations should reduce context switching.
 
----
+Whenever practical they should suggest specific review activities.
 
-# JSON Contract
-
-```json
-{
-  "summary": [],
-  "categories": [],
-  "evidence": [],
-  "diff": {},
-  "observations": [],
-  "confidence": {
-    "level": "",
-    "score": 0
-  },
-  "recommendations": []
-}
-```
-
-The JSON contract is considered stable within major versions.
+Future versions may also recommend commands.
 
 ---
 
-# Heuristic Contract
+# Product Philosophy
 
-The Review Engine consumes engineering heuristics.
+Review is not a reporting tool.
 
-Each heuristic contributes:
+Review is not a dashboard.
 
-* Category
-* Weight
-* Observation
-* Recommendation
+Review is not a code review assistant.
 
-The Review Engine owns:
+Review is an engineering prioritization engine.
 
-* Evaluation
-* Confidence calculation
-* Rendering
+The product succeeds when engineers consistently review the highest-impact changes before everything else.
 
-Heuristics own engineering knowledge.
+---
+
+# Future Direction
+
+Future versions may include:
+
+* Dependency summaries.
+* Engineering context for individual technologies.
+* Suggested review commands.
+* Review ordering.
+* Domain-specific review playbooks.
+
+These enhancements must remain deterministic and evidence-based.
 
 ---
 
@@ -203,23 +286,20 @@ Heuristics own engineering knowledge.
 
 Review v1.0 is complete when:
 
-* Context Engine is the only source of repository context.
-* Repository evidence is deterministic.
-* Engineering observations are explainable.
-* Confidence is deterministic.
-* Human output is complete.
-* JSON output is complete.
+* Context is consumed exclusively from the Context Engine.
+* Engineering domains are deterministic.
+* Review priorities are explainable.
+* Recommendations are actionable.
+* Human output minimizes unnecessary noise.
 * ShellCheck passes.
 * `bash -n` passes.
 
 ---
 
-# Status
+# Guiding Principle
 
-Version
+Git tells engineers what changed.
 
-**v1.0**
+Review tells engineers what deserves their attention.
 
-Status
-
-**In Development**
+That distinction defines the product.
