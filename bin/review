@@ -150,12 +150,50 @@ is_information_domain() {
 }
 
 ###############################################################################
+# Engineering Focus
+###############################################################################
+
+record_domain() {
+
+    local domain="$1"
+
+    if is_risk_domain "$domain"; then
+
+        if ((${#RISK_PRIMARY[@]} == 0)); then
+            RISK_PRIMARY+=("$domain")
+            return
+        fi
+
+        RISK_PRESENT+=("$domain")
+
+        return
+    fi
+
+    if is_information_domain "$domain"; then
+
+        if ((${#INFO_PRIMARY[@]} == 0)); then
+            INFO_PRIMARY+=("$domain")
+            return
+        fi
+
+        INFO_PRESENT+=("$domain")
+    fi
+}
+
+###############################################################################
 # Evaluation
 ###############################################################################
 
 record_knowledge() {
 
     local knowledge="$1"
+    local domain
+
+    domain="$(
+      knowledge_category "$knowledge"
+    )"
+
+    record_domain "$domain"
 
     mapfile -t NEW_FINDINGS < <(
         knowledge_findings "$knowledge"
@@ -255,6 +293,12 @@ evaluate_confidence() {
 
 evaluate() {
 
+    RISK_PRIMARY=()
+    RISK_PRESENT=()
+
+    INFO_PRIMARY=()
+    INFO_PRESENT=()
+
     FINDINGS=()
     RECOMMENDATIONS=()
 
@@ -270,7 +314,13 @@ evaluate() {
         evaluate_evidence "$evidence"
 
     done
+printf '\n=== Domains ===\n'
 
+printf 'Risk Primary : %s\n' "${RISK_PRIMARY[*]:-None}"
+printf 'Risk Present : %s\n' "${RISK_PRESENT[*]:-None}"
+
+printf 'Info Primary : %s\n' "${INFO_PRIMARY[*]:-None}"
+printf 'Info Present : %s\n' "${INFO_PRESENT[*]:-None}"
     evaluate_confidence
 }
 
