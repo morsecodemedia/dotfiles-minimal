@@ -23,19 +23,45 @@ eval "$(ctx --env)"
 require_git
 
 ###############################################################################
-# State
+# Review Model
 ###############################################################################
 
-SUMMARY=()
+#
+# Engineering Domains
+#
 
-EVIDENCE=()
+RISK_PRIMARY=()
+
+RISK_PRESENT=()
+
+INFO_PRIMARY=()
+
+INFO_PRESENT=()
+
+#
+# Findings
+#
 
 FINDINGS=()
 
 RECOMMENDATIONS=()
 
+#
+# Legacy Confidence Model
+#
+# Temporary until Engineering Focus replaces Engineering Confidence.
+#
+
 CONFIDENCE_SCORE=0
 CONFIDENCE_LEVEL="Unknown"
+
+###############################################################################
+# Collection
+###############################################################################
+
+SUMMARY=()
+
+EVIDENCE=()
 
 DIFF_STAT=""
 
@@ -89,6 +115,38 @@ collect() {
     collect_evidence
 
     collect_diff
+}
+
+###############################################################################
+# Engineering Domains
+###############################################################################
+
+is_risk_domain() {
+
+    case "$1" in
+
+        Framework|Executable|Dependencies|Configuration|Build\ System)
+
+            return 0
+            ;;
+
+    esac
+
+    return 1
+}
+
+is_information_domain() {
+
+    case "$1" in
+
+        Documentation|Architecture|Roadmap|Assets)
+
+            return 0
+            ;;
+
+    esac
+
+    return 1
 }
 
 ###############################################################################
