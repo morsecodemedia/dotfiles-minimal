@@ -164,6 +164,38 @@ domain_priority() {
     esac
 }
 
+ordered_review_domains() {
+
+    local ordered=()
+
+    ordered+=("${RISK_PRIMARY[@]}")
+    ordered+=("${RISK_ADDITIONAL[@]}")
+
+    ordered+=("${INFO_PRIMARY[@]}")
+    ordered+=("${INFO_ADDITIONAL[@]}")
+
+    printf "%s\n" "${ordered[@]}"
+}
+
+engineering_context_for_domain() {
+
+    local target="$1"
+
+    local entry
+    local domain
+    local context
+
+    for entry in "${ENGINEERING_CONTEXT[@]}"; do
+
+        IFS=$'\t' read -r domain context <<<"$entry"
+
+        [[ "$domain" != "$target" ]] && continue
+
+        printf "%s\n" "$context"
+
+    done
+}
+
 domain_exists() {
 
     local target="$1"
@@ -297,12 +329,19 @@ record_engineering_context() {
     )
 
     local context
+    local entry
 
     for context in "${NEW_CONTEXT[@]}"; do
 
-        ENGINEERING_CONTEXT+=(
-            "${domain}"$'\t'"${context}"
-        )
+        entry="${domain}"$'\t'"${context}"
+
+        if ! domain_exists \
+            "$entry" \
+            "${ENGINEERING_CONTEXT[@]}"; then
+
+            ENGINEERING_CONTEXT+=("$entry")
+
+        fi
 
     done
 
@@ -318,7 +357,13 @@ record_engineering_context() {
 
     for recommendation in "${NEW_RECOMMENDATIONS[@]}"; do
 
-        RECOMMENDATIONS+=("$recommendation")
+        if ! domain_exists \
+            "$recommendation" \
+            "${RECOMMENDATIONS[@]}"; then
+
+            RECOMMENDATIONS+=("$recommendation")
+
+        fi
 
     done
 }
@@ -468,43 +513,29 @@ render_engineering_context() {
 
     fi
 
-    local UNIQUE=()
-
-    local entry
-
-    for entry in "${ENGINEERING_CONTEXT[@]}"; do
-
-        if ! domain_exists \
-            "$entry" \
-            "${UNIQUE[@]}"; then
-
-            UNIQUE+=("$entry")
-
-        fi
-
-    done
-
-    local current_domain=""
     local domain
-    local context
 
-    for entry in "${UNIQUE[@]}"; do
+    while IFS= read -r domain; do
 
-        IFS=$'\t' read -r domain context <<<"$entry"
+        [[ -z "$domain" ]] && continue
 
-        if [[ "$domain" != "$current_domain" ]]; then
+        printf "%s\n\n" "$domain"
 
-            [[ -n "$current_domain" ]] && printf "\n"
+        local context
 
-            printf "%s\n\n" "$domain"
+        while IFS= read -r context; do
 
-            current_domain="$domain"
+            printf "  • %s\n" "$context"
 
-        fi
+        done < <(
+            engineering_context_for_domain "$domain"
+        )
 
-        printf "  • %s\n" "$context"
+        printf "\n"
 
-    done
+    done < <(
+        ordered_review_domains
+    )
 }
 
 render_focus() {
