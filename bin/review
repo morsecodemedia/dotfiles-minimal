@@ -299,7 +299,11 @@ record_engineering_context() {
     local context
 
     for context in "${NEW_CONTEXT[@]}"; do
-        ENGINEERING_CONTEXT+=("$context")
+
+        ENGINEERING_CONTEXT+=(
+            "${domain}"$'\t'"${context}"
+        )
+
     done
 
     #
@@ -313,7 +317,9 @@ record_engineering_context() {
     local recommendation
 
     for recommendation in "${NEW_RECOMMENDATIONS[@]}"; do
+
         RECOMMENDATIONS+=("$recommendation")
+
     done
 }
 
@@ -455,40 +461,49 @@ render_engineering_context() {
     section "Engineering Context"
 
     if ((${#ENGINEERING_CONTEXT[@]} == 0)); then
-        printf "  • No findings.\n"
-        return
-    fi
 
-    #
-    # Deduplicate findings while preserving order.
-    #
+        printf "  • No engineering context.\n"
+
+        return
+
+    fi
 
     local UNIQUE=()
 
-    local finding
+    local entry
 
-    for finding in "${ENGINEERING_CONTEXT[@]}"; do
+    for entry in "${ENGINEERING_CONTEXT[@]}"; do
 
-        local seen=false
-        local existing
+        if ! domain_exists \
+            "$entry" \
+            "${UNIQUE[@]}"; then
 
-        for existing in "${UNIQUE[@]}"; do
+            UNIQUE+=("$entry")
 
-            if [[ "$existing" == "$finding" ]]; then
-                seen=true
-                break
-            fi
-
-        done
-
-        if ! $seen; then
-            UNIQUE+=("$finding")
         fi
 
     done
 
-    for finding in "${UNIQUE[@]}"; do
-        printf "  • %s\n" "$finding"
+    local current_domain=""
+    local domain
+    local context
+
+    for entry in "${UNIQUE[@]}"; do
+
+        IFS=$'\t' read -r domain context <<<"$entry"
+
+        if [[ "$domain" != "$current_domain" ]]; then
+
+            [[ -n "$current_domain" ]] && printf "\n"
+
+            printf "%s\n\n" "$domain"
+
+            current_domain="$domain"
+
+        fi
+
+        printf "  • %s\n" "$context"
+
     done
 }
 
