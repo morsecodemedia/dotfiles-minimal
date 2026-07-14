@@ -1,6 +1,5 @@
 #!/opt/homebrew/bin/bash
 
-
 # Prevent multiple initialization within the current shell.
 if [[ -n "${WORKSTATION_INITIALIZED:-}" ]]; then
     return

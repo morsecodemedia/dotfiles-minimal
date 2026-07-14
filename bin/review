@@ -27,38 +27,54 @@ require_git
 ###############################################################################
 
 #
-# Engineering Domains
+# Review Domains
+#
+# Record Format
+#
+#     Domain<TAB>Classification<TAB>Priority
+#
+# Classification
+#
+#     Risk
+#     Information
+#
+# Priority
+#
+#     Primary
+#     Additional
 #
 
-RISK_PRIMARY=()
-
-RISK_ADDITIONAL=()
-
-INFO_PRIMARY=()
-
-INFO_ADDITIONAL=()
+REVIEW_DOMAINS=()
 
 #
-# Findings
+# Engineering Context
+#
+# Record Format
+#
+#     Domain<TAB>Context
 #
 
 ENGINEERING_CONTEXT=()
 
+#
+# Recommendations
+#
+# Record Format
+#
+#     Domain<TAB>Recommendation
+#
+
 RECOMMENDATIONS=()
 
-#
+###############################################################################
 # Collection
-#
+###############################################################################
 
 SUMMARY=()
 
 EVIDENCE=()
 
 DIFF_STAT=""
-
-###############################################################################
-# Collection
-###############################################################################
 
 collect_summary() {
 
@@ -87,6 +103,7 @@ collect_evidence() {
         #
         # Strip git status prefix.
         #
+
         EVIDENCE+=("${line:3}")
 
     done
@@ -140,10 +157,6 @@ is_information_domain() {
     return 1
 }
 
-###############################################################################
-# Engineering Focus
-###############################################################################
-
 domain_priority() {
 
     case "$1" in
@@ -164,140 +177,154 @@ domain_priority() {
     esac
 }
 
-ordered_review_domains() {
+###############################################################################
+# Review Domain Engine
+###############################################################################
 
-    local ordered=()
-
-    ordered+=("${RISK_PRIMARY[@]}")
-    ordered+=("${RISK_ADDITIONAL[@]}")
-
-    ordered+=("${INFO_PRIMARY[@]}")
-    ordered+=("${INFO_ADDITIONAL[@]}")
-
-    printf "%s\n" "${ordered[@]}"
-}
-
-engineering_context_for_domain() {
-
-    local target="$1"
-
-    local entry
-    local domain
-    local context
-
-    for entry in "${ENGINEERING_CONTEXT[@]}"; do
-
-        IFS=$'\t' read -r domain context <<<"$entry"
-
-        [[ "$domain" != "$target" ]] && continue
-
-        printf "%s\n" "$context"
-
-    done
-}
-
-domain_exists() {
+review_domain_exists() {
 
     local target="$1"
 
     shift
 
-    local item
+    local record
 
-    for item in "$@"; do
+    for record in "$@"; do
 
-        [[ "$item" == "$target" ]] && return 0
+        [[ "$record" == "$target" ]] && return 0
 
     done
 
     return 1
 }
 
-promote_risk_domain() {
+review_domain_record() {
 
     local domain="$1"
+    local classification="$2"
+    local priority="$3"
 
-    if ((${#RISK_PRIMARY[@]} == 0)); then
-
-        RISK_PRIMARY+=("$domain")
-        return
-
-    fi
-
-    local current_priority
-    local new_priority
-
-    current_priority="$(
-        domain_priority "${RISK_PRIMARY[0]}"
-    )"
-
-    new_priority="$(
-        domain_priority "$domain"
-    )"
-
-    if (( new_priority > current_priority )); then
-
-        if ! domain_exists \
-            "${RISK_PRIMARY[0]}" \
-            "${RISK_ADDITIONAL[@]}"; then
-
-            RISK_ADDITIONAL+=("${RISK_PRIMARY[0]}")
-
-        fi
-
-        RISK_PRIMARY=("$domain")
-
-        return
-
-    fi
-
-    if ! domain_exists \
+    printf "%s\t%s\t%s\n" \
         "$domain" \
-        "${RISK_PRIMARY[@]}" \
-        "${RISK_ADDITIONAL[@]}"; then
-
-        RISK_ADDITIONAL+=("$domain")
-
-    fi
+        "$classification" \
+        "$priority"
 }
 
-promote_information_domain() {
+review_domain_add() {
 
     local domain="$1"
+    local classification="$2"
+    local priority="$3"
 
-    if ((${#INFO_PRIMARY[@]} == 0)); then
+    local record
 
-        INFO_PRIMARY+=("$domain")
+    record="$(
+        review_domain_record \
+            "$domain" \
+            "$classification" \
+            "$priority"
+    )"
+
+    if review_domain_exists \
+        "$record" \
+        "${REVIEW_DOMAINS[@]}"; then
+
         return
 
     fi
 
-    if ! domain_exists \
-        "$domain" \
-        "${INFO_PRIMARY[@]}" \
-        "${INFO_ADDITIONAL[@]}"; then
-
-        INFO_ADDITIONAL+=("$domain")
-
-    fi
+    REVIEW_DOMAINS+=("$record")
 }
 
-record_domain() {
+review_domain_remove() {
+
+    local target="$1"
+
+    local remaining=()
+
+    local record
+
+    for record in "${REVIEW_DOMAINS[@]}"; do
+
+        [[ "$record" == "$target" ]] && continue
+
+        remaining+=("$record")
+
+    done
+
+    REVIEW_DOMAINS=("${remaining[@]}")
+}
+
+review_domain_promote() {
 
     local domain="$1"
+
+    local classification
 
     if is_risk_domain "$domain"; then
 
-        promote_risk_domain "$domain"
+        classification="Risk"
+
+    else
+
+        classification="Information"
+
+    fi
+
+    local current=""
+    local record
+    local name
+    local type
+    local priority
+
+    for record in "${REVIEW_DOMAINS[@]}"; do
+
+        IFS=$'\t' read -r name type priority <<<"$record"
+
+        [[ "$type" != "$classification" ]] && continue
+        [[ "$priority" != "Primary" ]] && continue
+
+        current="$record"
+
+        break
+
+    done
+
+    if [[ -z "$current" ]]; then
+
+        review_domain_add \
+            "$domain" \
+            "$classification" \
+            "Primary"
+
         return
 
     fi
 
-    if is_information_domain "$domain"; then
+    IFS=$'\t' read -r name type priority <<<"$current"
 
-        promote_information_domain "$domain"
+    if (( $(domain_priority "$domain") > $(domain_priority "$name") )); then
+
+        review_domain_remove "$current"
+
+        review_domain_add \
+            "$name" \
+            "$classification" \
+            "Additional"
+
+        review_domain_add \
+            "$domain" \
+            "$classification" \
+            "Primary"
+
+        return
 
     fi
+
+    review_domain_add \
+        "$domain" \
+        "$classification" \
+        "Additional"
 }
 
 ###############################################################################
@@ -308,62 +335,48 @@ record_engineering_context() {
 
     local knowledge="$1"
 
-    #
-    # Engineering Domain
-    #
-
     local domain
 
     domain="$(
         knowledge_category "$knowledge"
     )"
 
-    record_domain "$domain"
+    review_domain_promote "$domain"
 
-    #
-    # Engineering Context
-    #
-
-    mapfile -t NEW_CONTEXT < <(
+    mapfile -t CONTEXT < <(
         knowledge_findings "$knowledge"
     )
 
-    local context
-    local entry
+    local item
+    local record
 
-    for context in "${NEW_CONTEXT[@]}"; do
+    for item in "${CONTEXT[@]}"; do
 
-        entry="${domain}"$'\t'"${context}"
+        record="${domain}"$'\t'"${item}"
 
-        if ! domain_exists \
-            "$entry" \
-            "${ENGINEERING_CONTEXT[@]}"; then
+        review_domain_exists \
+            "$record" \
+            "${ENGINEERING_CONTEXT[@]}" &&
+            continue
 
-            ENGINEERING_CONTEXT+=("$entry")
-
-        fi
+        ENGINEERING_CONTEXT+=("$record")
 
     done
 
-    #
-    # Recommendations
-    #
-
-    mapfile -t NEW_RECOMMENDATIONS < <(
+    mapfile -t RECOMMENDATION_ITEMS < <(
         knowledge_recommendations "$knowledge"
     )
 
-    local recommendation
+    for item in "${RECOMMENDATION_ITEMS[@]}"; do
 
-    for recommendation in "${NEW_RECOMMENDATIONS[@]}"; do
+        record="${domain}"$'\t'"${item}"
 
-        if ! domain_exists \
-            "$recommendation" \
-            "${RECOMMENDATIONS[@]}"; then
+        review_domain_exists \
+            "$record" \
+            "${RECOMMENDATIONS[@]}" &&
+            continue
 
-            RECOMMENDATIONS+=("$recommendation")
-
-        fi
+        RECOMMENDATIONS+=("$record")
 
     done
 }
@@ -378,11 +391,10 @@ evaluate_knowledge() {
     )
 
     local match
+    local type
+    local value
 
     for match in "${MATCHES[@]}"; do
-
-        local type
-        local value
 
         IFS=$'\t' read -r type value <<<"$match"
 
@@ -423,40 +435,111 @@ evaluate_evidence() {
 
 evaluate() {
 
-    #
-    # Engineering Domains
-    #
-
-    RISK_PRIMARY=()
-    RISK_ADDITIONAL=()
-
-    INFO_PRIMARY=()
-    INFO_ADDITIONAL=()
-
-    #
-    # Engineering Context
-    #
+    REVIEW_DOMAINS=()
 
     ENGINEERING_CONTEXT=()
 
     RECOMMENDATIONS=()
 
-    #
-    # Knowledge
-    #
-
     load_knowledge \
         "$WORKSTATION_ROOT/heuristics/review"
-
-    #
-    # Evidence
-    #
 
     local evidence
 
     for evidence in "${EVIDENCE[@]}"; do
 
         evaluate_evidence "$evidence"
+
+    done
+}
+
+###############################################################################
+# Rendering Helpers
+###############################################################################
+
+ordered_review_domains() {
+
+    local primary_risk=()
+    local additional_risk=()
+
+    local primary_information=()
+    local additional_information=()
+
+    local record
+    local domain
+    local classification
+    local priority
+
+    for record in "${REVIEW_DOMAINS[@]}"; do
+
+        IFS=$'\t' read -r domain classification priority <<<"$record"
+
+        case "${classification}:${priority}" in
+
+            Risk:Primary)
+
+                primary_risk+=("$domain")
+                ;;
+
+            Risk:Additional)
+
+                additional_risk+=("$domain")
+                ;;
+
+            Information:Primary)
+
+                primary_information+=("$domain")
+                ;;
+
+            Information:Additional)
+
+                additional_information+=("$domain")
+                ;;
+
+        esac
+
+    done
+
+    printf "%s\n" "${primary_risk[@]}"
+    printf "%s\n" "${additional_risk[@]}"
+    printf "%s\n" "${primary_information[@]}"
+    printf "%s\n" "${additional_information[@]}"
+}
+
+engineering_context_for_domain() {
+
+    local target="$1"
+
+    local record
+    local domain
+    local context
+
+    for record in "${ENGINEERING_CONTEXT[@]}"; do
+
+        IFS=$'\t' read -r domain context <<<"$record"
+
+        [[ "$domain" != "$target" ]] && continue
+
+        printf "%s\n" "$context"
+
+    done
+}
+
+recommendations_for_domain() {
+
+    local target="$1"
+
+    local record
+    local domain
+    local recommendation
+
+    for record in "${RECOMMENDATIONS[@]}"; do
+
+        IFS=$'\t' read -r domain recommendation <<<"$record"
+
+        [[ "$domain" != "$target" ]] && continue
+
+        printf "%s\n" "$recommendation"
 
     done
 }
@@ -481,8 +564,11 @@ render_evidence() {
     section "Evidence"
 
     if ((${#EVIDENCE[@]} == 0)); then
+
         printf "  Working tree is clean.\n"
+
         return
+
     fi
 
     local evidence
@@ -499,6 +585,95 @@ render_diff() {
     section "Diff Summary"
 
     printf "%s\n" "$DIFF_STAT"
+}
+
+render_focus() {
+
+    section "Engineering Focus"
+
+    local risk_primary=()
+    local risk_additional=()
+    local info_primary=()
+    local info_additional=()
+
+    local record
+    local domain
+    local classification
+    local priority
+
+    for record in "${REVIEW_DOMAINS[@]}"; do
+
+        IFS=$'\t' read -r domain classification priority <<<"$record"
+
+        case "${classification}:${priority}" in
+
+            Risk:Primary)
+
+                risk_primary+=("$domain")
+                ;;
+
+            Risk:Additional)
+
+                risk_additional+=("$domain")
+                ;;
+
+            Information:Primary)
+
+                info_primary+=("$domain")
+                ;;
+
+            Information:Additional)
+
+                info_additional+=("$domain")
+                ;;
+
+        esac
+
+    done
+
+    if ((${#risk_primary[@]})); then
+
+        printf "\nRisk-bearing\n\n"
+
+        printf "Primary\n"
+
+        for domain in "${risk_primary[@]}"; do
+            printf "  • %s\n" "$domain"
+        done
+
+    fi
+
+    if ((${#risk_additional[@]})); then
+
+        printf "\nAdditional\n"
+
+        for domain in "${risk_additional[@]}"; do
+            printf "  • %s\n" "$domain"
+        done
+
+    fi
+
+    if ((${#info_primary[@]})); then
+
+        printf "\nInformational\n\n"
+
+        printf "Primary\n"
+
+        for domain in "${info_primary[@]}"; do
+            printf "  • %s\n" "$domain"
+        done
+
+    fi
+
+    if ((${#info_additional[@]})); then
+
+        printf "\nAdditional\n"
+
+        for domain in "${info_additional[@]}"; do
+            printf "  • %s\n" "$domain"
+        done
+
+    fi
 }
 
 render_engineering_context() {
@@ -524,9 +699,7 @@ render_engineering_context() {
         local context
 
         while IFS= read -r context; do
-
             printf "  • %s\n" "$context"
-
         done < <(
             engineering_context_for_domain "$domain"
         )
@@ -538,108 +711,34 @@ render_engineering_context() {
     )
 }
 
-render_focus() {
-
-    section "Engineering Focus"
-
-    if ((${#RISK_PRIMARY[@]})); then
-
-        printf "\nRisk-bearing\n\n"
-
-        printf "Primary\n"
-
-        local domain
-
-        for domain in "${RISK_PRIMARY[@]}"; do
-            printf "  • %s\n" "$domain"
-        done
-
-    fi
-
-    if ((${#RISK_ADDITIONAL[@]})); then
-
-        printf "\nAdditional\n"
-
-        local domain
-
-        for domain in "${RISK_ADDITIONAL[@]}"; do
-            printf "  • %s\n" "$domain"
-        done
-
-    fi
-
-    if ((${#INFO_PRIMARY[@]})); then
-
-        printf "\nInformational\n\n"
-
-        printf "Primary\n"
-
-        local domain
-
-        for domain in "${INFO_PRIMARY[@]}"; do
-            printf "  • %s\n" "$domain"
-        done
-
-    fi
-
-    if ((${#INFO_ADDITIONAL[@]})); then
-
-        printf "\nAdditional\n"
-
-        local domain
-
-        for domain in "${INFO_ADDITIONAL[@]}"; do
-            printf "  • %s\n" "$domain"
-        done
-
-    fi
-}
-
 render_recommendations() {
 
     section "Recommendations"
 
-    if ((${#RECOMMENDATIONS[@]} == 0)); then
-        printf "  • Continue current work.\n"
-        return
-    fi
+    local domain
 
-    #
-    # Deduplicate recommendations while preserving order.
-    #
+    while IFS= read -r domain; do
 
-    local UNIQUE=()
+        [[ -z "$domain" ]] && continue
 
-    local recommendation
+        while IFS= read -r recommendation; do
+            printf "  • %s\n" "$recommendation"
+        done < <(
+            recommendations_for_domain "$domain"
+        )
 
-    for recommendation in "${RECOMMENDATIONS[@]}"; do
-
-        local seen=false
-        local existing
-
-        for existing in "${UNIQUE[@]}"; do
-
-            if [[ "$existing" == "$recommendation" ]]; then
-                seen=true
-                break
-            fi
-
-        done
-
-        if ! $seen; then
-            UNIQUE+=("$recommendation")
-        fi
-
-    done
-
-    for recommendation in "${UNIQUE[@]}"; do
-        printf "  • %s\n" "$recommendation"
-    done
+    done < <(
+        ordered_review_domains
+    )
 }
+
+###############################################################################
+# Human Output
+###############################################################################
 
 render_human() {
 
-    heading "Engineering Confidence Review"
+    heading "Engineering Review"
 
     render_summary
 

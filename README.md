@@ -21,7 +21,3 @@ BASH_ENV="/home/tomasino/.profile"
 ## Linking strategy
 
 The install process will run through this repository recursively looking for individual files. It will link any files into the home directory on an individual file-by-file basis. If the corresponding folder doesn't exist yet, it will be created. The purpose of going file-by-file is to avoid linking any directories and accidentally scooping up other files that may be added there over time.
-
-#### CALIBRATION TEST
-
-verification test
