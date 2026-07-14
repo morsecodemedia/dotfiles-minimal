@@ -42,7 +42,7 @@ INFO_ADDITIONAL=()
 # Findings
 #
 
-FINDINGS=()
+ENGINEERING_CONTEXT=()
 
 RECOMMENDATIONS=()
 
@@ -272,26 +272,39 @@ record_domain() {
 # Evaluation
 ###############################################################################
 
-record_knowledge() {
+record_engineering_context() {
 
     local knowledge="$1"
+
+    #
+    # Engineering Domain
+    #
+
     local domain
 
     domain="$(
-      knowledge_category "$knowledge"
+        knowledge_category "$knowledge"
     )"
 
     record_domain "$domain"
 
-    mapfile -t NEW_FINDINGS < <(
+    #
+    # Engineering Context
+    #
+
+    mapfile -t NEW_CONTEXT < <(
         knowledge_findings "$knowledge"
     )
 
-    local finding
+    local context
 
-    for finding in "${NEW_FINDINGS[@]}"; do
-        FINDINGS+=("$finding")
+    for context in "${NEW_CONTEXT[@]}"; do
+        ENGINEERING_CONTEXT+=("$context")
     done
+
+    #
+    # Recommendations
+    #
 
     mapfile -t NEW_RECOMMENDATIONS < <(
         knowledge_recommendations "$knowledge"
@@ -302,7 +315,40 @@ record_knowledge() {
     for recommendation in "${NEW_RECOMMENDATIONS[@]}"; do
         RECOMMENDATIONS+=("$recommendation")
     done
+}
 
+evaluate_knowledge() {
+
+    local evidence="$1"
+    local knowledge="$2"
+
+    mapfile -t MATCHES < <(
+        knowledge_matches "$knowledge"
+    )
+
+    local match
+
+    for match in "${MATCHES[@]}"; do
+
+        local type
+        local value
+
+        IFS=$'\t' read -r type value <<<"$match"
+
+        if ! matches \
+            "$evidence" \
+            "$type" \
+            "$value"; then
+
+            continue
+
+        fi
+
+        record_engineering_context "$knowledge"
+
+        return
+
+    done
 }
 
 evaluate_evidence() {
@@ -317,36 +363,18 @@ evaluate_evidence() {
 
     for knowledge in "${KNOWLEDGE_ITEMS[@]}"; do
 
-        mapfile -t MATCHES < <(
-            knowledge_matches "$knowledge"
-        )
-
-        local match
-
-        for match in "${MATCHES[@]}"; do
-
-            local type
-            local value
-
-            IFS=$'\t' read -r type value <<<"$match"
-
-            if matches \
-                "$evidence" \
-                "$type" \
-                "$value"; then
-
-                record_knowledge "$knowledge"
-
-                break
-
-            fi
-
-        done
+        evaluate_knowledge \
+            "$evidence" \
+            "$knowledge"
 
     done
 }
 
 evaluate() {
+
+    #
+    # Engineering Domains
+    #
 
     RISK_PRIMARY=()
     RISK_ADDITIONAL=()
@@ -354,12 +382,24 @@ evaluate() {
     INFO_PRIMARY=()
     INFO_ADDITIONAL=()
 
-    FINDINGS=()
+    #
+    # Engineering Context
+    #
+
+    ENGINEERING_CONTEXT=()
+
     RECOMMENDATIONS=()
 
+    #
+    # Knowledge
+    #
 
     load_knowledge \
         "$WORKSTATION_ROOT/heuristics/review"
+
+    #
+    # Evidence
+    #
 
     local evidence
 
@@ -410,11 +450,11 @@ render_diff() {
     printf "%s\n" "$DIFF_STAT"
 }
 
-render_findings() {
+render_engineering_context() {
 
-    section "Findings"
+    section "Engineering Context"
 
-    if ((${#FINDINGS[@]} == 0)); then
+    if ((${#ENGINEERING_CONTEXT[@]} == 0)); then
         printf "  • No findings.\n"
         return
     fi
@@ -427,7 +467,7 @@ render_findings() {
 
     local finding
 
-    for finding in "${FINDINGS[@]}"; do
+    for finding in "${ENGINEERING_CONTEXT[@]}"; do
 
         local seen=false
         local existing
@@ -563,7 +603,7 @@ render_human() {
 
     render_focus
 
-    render_findings
+    render_engineering_context
 
     render_recommendations
 
