@@ -1,23 +1,129 @@
-# dotfiles
+# Engineering Workstation
 
-My previous [dotfiles](https://github.com/jamestomasino/dotfiles) collection has grown over the years to encompass a huge variety of features that were `bash` focused. Setup relied on some gnu packages that are not available on all systems. The functions wrapping git functionality and other per-prompt processing loaded down the shell and lengthened startup times.
+An opinionated engineering workstation focused on reducing cognitive friction, improving engineering decision-making, and building a local-first development environment.
 
-This repository is a reboot. I've stripped out a lot, but kept most of the more useful features that I take advantage of day-by-day. These dotfiles are designed to run with `/bin/sh` or `dash` as the interactive shell. While I may still run `bash` on some machines for tab-completion, this set should prove more portable.
+This repository has evolved beyond a traditional dotfiles collection. It is now the foundation of a larger engineering ecosystem composed of independent but complementary platforms.
 
-## Usage
+## Mission
 
-* Install with `install.sh`.
-* Uninstall with `uninstall.sh`.
+The goal of this workstation is not to automate engineering.
 
-## Non-login environment
+The goal is to eliminate unnecessary friction so engineering effort can be spent solving problems instead of managing tools.
 
-Since everything is shoved into .profile there's nothing set up path-wise for non-login script execution, like cronjobs. I add the following to my user cron if I need the environment populated:
+Every subsystem exists to answer a different question:
 
+* **What is my current state?**
+* **What deserves my attention?**
+* **What should I do next?**
+* **How can repetitive work be delegated?**
+
+The workstation should help engineers make better decisions, not simply provide more information.
+
+## Ecosystem
+
+### Dotfiles
+
+The foundation of the workstation.
+
+Responsible for:
+
+* Shell configuration
+* Environment management
+* Runtime configuration
+* Tool installation
+* Personal preferences
+
+### NextGen
+
+The engineering cognition platform.
+
+Responsible for reducing engineering friction through deterministic tooling and engineering knowledge.
+
+Current subsystems include:
+
+* Context Engine
+* Engineering Review Engine
+* Knowledge Engine
+* Engineering Workflows
+
+### Local Intelligence Platform (LIP)
+
+A local-first intelligence platform built around specialized engineering and creative personas.
+
+Rather than interacting directly with language models, work is delegated to purpose-built collaborators such as:
+
+* Engineer
+* Architect
+* Analyst
+* Auditor
+* Writer
+
+Model selection is considered an implementation detail. Personas remain stable while models evolve over time.
+
+### Image Lab
+
+A local creative environment for concept exploration and visual thinking.
+
+Image Lab exists to support experimentation, ideation, mood boards, concept art, and communication with human artists—not to replace them.
+
+## Design Principles
+
+The workstation is guided by several core principles:
+
+* Attention is finite.
+* Silence is signal.
+* Deterministic systems before probabilistic systems.
+* Build platforms before products.
+* Explain why, not just what.
+* Reduce context switching whenever possible.
+* Human judgment remains the final authority.
+
+## Repository Structure
+
+This repository is organized around independent platforms.
+
+```text
+docs/
+
+    ECOSYSTEM.md
+
+    dotfiles/
+
+    nextgen/
+
+    lip/
+
+    image-lab/
 ```
-SHELL=/bin/bash
-BASH_ENV="/home/tomasino/.profile"
-```
 
-## Linking strategy
+Each subsystem owns its own documentation, architecture, roadmap, and implementation details.
 
-The install process will run through this repository recursively looking for individual files. It will link any files into the home directory on an individual file-by-file basis. If the corresponding folder doesn't exist yet, it will be created. The purpose of going file-by-file is to avoid linking any directories and accidentally scooping up other files that may be added there over time.
+## Current Status
+
+The engineering workstation is under active development.
+
+Current focus areas include:
+
+* Engineering Review Engine
+* Documentation architecture
+* Local Intelligence Platform
+* Creative tooling
+* Engineering workflows
+
+## Documentation
+
+The documentation is organized by subsystem.
+
+Start here:
+
+* `docs/ECOSYSTEM.md`
+
+From there, navigate into the subsystem that matches your area of interest.
+
+## Philosophy
+
+Git tells engineers what changed.
+
+The workstation helps engineers decide what deserves their attention.
+
+That distinction defines this project.

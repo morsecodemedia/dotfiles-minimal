@@ -1,50 +1,128 @@
-# Workstation Identity
+# Identity System
 
-## Philosophy
+## Mission
 
-The workstation has an internal executable.
+The Identity System separates implementation from user experience.
 
-The user chooses its public identity.
+The workstation has one internal implementation.
 
-Examples:
+Users choose how they interact with it.
 
-- morse
-- leaf
-- forge
-- ng
+Identity is considered part of the user experience rather than part of the implementation.
 
-The identity is configured during first-run setup, not at build time.
+---
 
-The executable remains constant.
+# Philosophy
 
-The identity is user-defined.
+The workstation should expose identity.
 
+It should hide implementation.
 
-## Identity Controls
+Users should remember the name they chose.
 
-The identity determines:
+Developers should remember the implementation.
 
-- Primary command name
-- Shell completions
-- Helper aliases
-- Prompt integration
-- Documentation examples
+The implementation should remain invisible during normal use.
 
-The identity does not determine implementation.
+---
 
-## Terminology
+# Design Principles
 
-| Concept | Description |
-|----------|-------------|
-| Project | NextGen Workstation |
-| Executable | The internal CLI binary (currently `ng`) |
-| Identity | The user-selected command name (for example: `morse`, `leaf`) |
-| Service | A capability exposed by the workstation (for example: `ai`, `ctx`, `doctor`) |
+## Identity Is User-Owned
 
-## Design Principle
+Identity is selected during workstation setup.
+
+It is never hard-coded into the platform.
+
+Different users may interact with identical implementations using different identities.
+
+---
+
+## Stable Implementation
+
+The internal executable remains stable.
+
+User-facing identities remain configurable.
+
+Changing identity should never change behavior.
+
+---
+
+## Separate Responsibilities
+
+Identity affects presentation.
+
+Identity never affects implementation.
+
+Examples include:
+
+* Primary command name
+* Shell completions
+* Prompt integration
+* Helper aliases
+* Documentation examples
+
+Identity must never alter engineering behavior.
+
+---
+
+## Human-Centered Design
+
+The workstation should adapt to the engineer.
+
+Engineers should not adapt to implementation details.
+
+Identity is one mechanism for making the workstation feel personal without increasing implementation complexity.
+
+---
+
+# Terminology
+
+| Concept    | Description                                                     |
+| ---------- | --------------------------------------------------------------- |
+| Ecosystem  | The complete Engineering Workstation ecosystem.                 |
+| Platform   | A major subsystem such as Dotfiles, NextGen, LIP, or Image Lab. |
+| Product    | A user-facing capability built upon a platform.                 |
+| Executable | The internal implementation entry point.                        |
+| Identity   | The user-selected command name presented by the workstation.    |
+| Service    | A capability exposed by the workstation.                        |
+
+---
+
+# Relationship to the Ecosystem
+
+Identity spans the entire workstation.
+
+It is intentionally independent of:
+
+* Dotfiles
+* NextGen
+* Local Intelligence Platform
+* Image Lab
+
+Every platform should honor the user's selected identity whenever practical.
+
+---
+
+# Future Direction
+
+Future capabilities may include:
+
+* Multiple workstation identities
+* Team identity profiles
+* Environment-specific identities
+* Shared branding across workstation services
+
+Identity should continue affecting presentation only.
+
+Implementation should remain stable.
+
+---
+
+# Guiding Principle
 
 Users should remember their identity.
 
-Developers should remember the executable.
+Developers should remember the implementation.
 
-The implementation should be invisible.
+The workstation should make the distinction invisible.
